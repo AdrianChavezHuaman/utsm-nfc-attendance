@@ -1,130 +1,133 @@
-# UTSM NFC Attendance · Control de asistencia con tarjeta NFC
+# UTSM NFC Attendance — Attendance Control with NFC Cards
 
-Prototipo local de control de asistencia para la **Universidad Tecnológica San Martín (UTSM)**, una institución ficticia de dos sedes. Registra marcaciones con tarjeta NFC, clasifica incidencias, recibe justificaciones digitales, consolida el mes, genera reportes y deja cada cambio en auditoría.
+A local attendance-control prototype for the fictional **Universidad Tecnológica San Martín (UTSM)**, a two-campus institution. It registers NFC card check-ins, classifies incidents, receives digital justifications, consolidates monthly and annual reports, and records every change in an audit log.
 
-> Proyecto académico con datos ficticios. No es una implantación real ni procesa información de personas.
+> Academic project with fictitious data. It is not a real deployment and does not process personal information.
 
 ![Python](https://img.shields.io/badge/Python-3.11%2B-3776AB?logo=python&logoColor=white)
 ![Flask](https://img.shields.io/badge/Flask-3.x-000000?logo=flask&logoColor=white)
 ![SQLite](https://img.shields.io/badge/SQLite-3-003B57?logo=sqlite&logoColor=white)
 ![Tests](https://img.shields.io/badge/tests-135%20passed-1c5a3e)
-![Estado](https://img.shields.io/badge/estado-protocolo%20acad%C3%A9mico-855a16)
+![Status](https://img.shields.io/badge/status-academic%20prototype-855a16)
 
 <p align="center">
-  <img src="docs/readme/panel.png" width="49%" alt="Panel de inicio">
-  <img src="docs/readme/kiosco.png" width="49%" alt="Kiosco NFC">
+  <img src="docs/readme/panel.png" width="49%" alt="Home panel">
+  <img src="docs/readme/kiosco.png" width="49%" alt="NFC kiosk">
 </p>
 <p align="center">
-  <img src="docs/readme/asistencia.png" width="49%" alt="Asistencia diaria">
-  <img src="docs/readme/consolidado.png" width="49%" alt="Consolidado anual">
+  <img src="docs/readme/asistencia.png" width="49%" alt="Daily attendance">
+  <img src="docs/readme/consolidado.png" width="49%" alt="Annual consolidation">
 </p>
 
-## Qué puedes hacer
+## Demo Access
 
-- **Marcar con tarjeta NFC** en un kiosco de sede, con tarjetas de demostración, bloqueo de duplicados y confirmación en pantalla.
-- **Revisar la asistencia diaria** de las dos sedes y abrir la ficha de cada trabajador con calendario, lista, horario y horas acumuladas.
-- **Gestionar incidencias y justificaciones**: el trabajador sube su sustento, el coordinador de su área aprueba o rechaza y todo queda auditado.
-- **Consolidar el mes**: preconsolidado con excepciones, cierre autorizado por jefatura y archivos CSV, Excel y PDF.
-- **Analizar el año**: matriz enero–diciembre, comparación enero vs enero, año vs año y vista por semestre.
-- **Corregir una marcación** con motivo obligatorio, cierre de la incidencia asociada y registro antes/después.
-- **Auditar el sistema** con una lectura humana de cada evento: quién, qué, cuándo, desde qué IP y qué cambió.
-- **Administrar** sedes, áreas, trabajadores, tarjetas, lectores, horarios y usuarios.
+| Role | Email | Password |
+|---|---|---|
+| Administrator | `admin@utsm.edu.pe` | `admin123` |
+| HR Manager | `jefe@utsm.edu.pe` | `jefe123` |
+| HR Analyst | `analista@utsm.edu.pe` | `analista123` |
+| Area Coordinator | `coordinador@utsm.edu.pe` | `coordinador123` |
+| Employee | `trabajador@utsm.edu.pe` | `trabajador123` |
 
-### Por rol
+The **Administrator** account can explore every module. The HR Analyst works with attendance, people, annual reports and the audit log. The Area Coordinator only sees their own area, and the Employee only sees their own record.
 
-| Rol | Puede |
-| --- | --- |
-| **Administrador** | Todo el sistema, incluida la administración de catálogos y usuarios. |
-| **Jefe de RR. HH.** | Autorizar el cierre mensual, revisar consolidados y auditar. |
-| **Analista de RR. HH.** | Asistencia, personal, consolidado anual, corrección de marcas y auditoría. |
-| **Coordinador de área** | Ver su área y resolver las justificaciones de su equipo. |
-| **Trabajador** | Consultar su propia asistencia y justificar sus incidencias. |
+## Highlights
 
-## Cómo funciona
+- **NFC kiosk** with demo cards, duplicate blocking, on-screen confirmation and ten business rules.
+- **Daily attendance** for both campuses, with a monthly employee file, calendar view, list view and weekly schedules.
+- **Incidents and justifications**: employees upload a digital support file, the coordinator approves or rejects it, and every step is audited.
+- **Monthly close**: pre-consolidation with pending exceptions, manager authorization and CSV, Excel and PDF outputs.
+- **Annual consolidation**: January–December matrix, January vs January, year vs year, filters and a semester view.
+- **Manual mark correction** with a mandatory reason, automatic incident closure and before/after audit.
+- **Readable audit log**: who did what, when, from which IP, and which fields changed.
+- **Role-based access** for Administrator, HR Manager, HR Analyst, Area Coordinator and Employee.
+- **Security controls**: five failed attempts trigger a 15-minute lock, 30-minute idle session, hashed passwords, `HttpOnly` and `SameSite` cookies, and basic security headers.
+
+## How It Works
 
 ```text
-Tarjeta NFC → lector → API → reglas → marca / incidencia → justificación → consolidado → cierre
+NFC card → reader → API → business rules → mark / incident → justification → consolidation → close
 ```
 
-1. El kiosco envía el UID de la tarjeta y el sistema valida que esté activa.
-2. Se aplican las reglas de marcación: duplicados, tolerancia, doble sede y horario.
-3. Si algo no cuadra, se crea una incidencia y el trabajador puede justificarla.
-4. El coordinador resuelve la justificación; el analista corrige excepciones.
-5. El jefe autoriza el cierre y se generan los archivos del periodo.
-6. El consolidado anual compara la línea base con la meta y con el escenario simulado.
+1. The kiosk sends the card UID and the system checks that the card is active.
+2. Business rules validate duplicates, tolerance, double check-in at two campuses and schedule.
+3. If something does not match, an incident is created and the employee can justify it.
+4. The coordinator resolves the justification; the analyst corrects remaining exceptions.
+5. The HR manager authorizes the monthly close and the period files are generated.
+6. The annual report compares the baseline, the target and the simulated scenario.
 
-### Reglas de la marcación
+### Business Rules
 
-| Regla | Qué controla |
-| --- | --- |
-| R-01 | Solo tarjetas activas. |
-| R-02 | Bloqueo de duplicados en una ventana de 2 minutos. |
-| R-03 | Tolerancia de 10 minutos sobre el horario. |
-| R-04 | Detección de entrada/salida faltante o fuera de horario. |
-| R-05 | Plazo de 5 días hábiles para justificar. |
-| R-06 | El coordinador solo resuelve incidencias de su área. |
-| R-07 | Un periodo cerrado no admite cambios. |
-| R-08 | Una tarjeta perdida se bloquea. |
-| R-09 | Alerta por marcaciones en dos sedes en menos de 30 minutos. |
-| R-10 | Se conserva la hora real del dispositivo. |
+| Rule | What it controls |
+|---|---|
+| R-01 | Only active cards. |
+| R-02 | Duplicate blocking within a 2-minute window. |
+| R-03 | 10-minute tolerance against the schedule. |
+| R-04 | Missing or out-of-schedule check-ins and check-outs. |
+| R-05 | 5 business days to submit a justification. |
+| R-06 | Coordinators only resolve incidents from their own area. |
+| R-07 | A closed period rejects changes. |
+| R-08 | A lost card is blocked. |
+| R-09 | Alert when the same person checks in at two campuses within 30 minutes. |
+| R-10 | The real device timestamp is preserved. |
 
-### Arquitectura
+### Architecture
 
-- **Flask** con blueprints por módulo: auth, kiosk, incidents, attendance, reports, dashboard, audit, admin y main.
-- **SQLAlchemy + SQLite** con 14 tablas: sedes, áreas, trabajadores, tarjetas, horarios, lectores, marcas, incidencias, justificaciones, usuarios, auditoría, periodos, consolidados e indicadores.
-- **Jinja2 + CSS propio** con el sistema visual “Papel, bosque y latón”; Chart.js se sirve localmente.
-- **WeasyPrint y openpyxl** para PDF y Excel.
-- **pytest** para las reglas del proceso y **Selenium** para la evidencia visual.
+- **Flask** with blueprints per module: auth, kiosk, incidents, attendance, reports, dashboard, audit, admin and main.
+- **SQLAlchemy + SQLite** with 14 tables: campuses, areas, employees, cards, schedules, readers, marks, incidents, justifications, users, audit, periods, consolidations and indicators.
+- **Jinja2 + custom CSS** using the “Paper, forest and brass” visual system; Chart.js is served locally.
+- **WeasyPrint and openpyxl** for PDF and Excel exports.
+- **pytest** for process rules and **Selenium** for visual evidence.
 
-### Escenarios de datos
+### Data Scenarios
 
-| Periodo | Escenario | Marcación |
-| --- | --- | --- |
-| 2024–2026 | Línea base AS-IS | Huella dactilar, 0 % NFC |
-| Enero 2027 | Simulación TO-BE | Tarjeta NFC, 95 % de adopción |
-| 2027 anual | Meta TO-BE | No es una medición |
+| Period | Scenario | Check-in method |
+|---|---|---|
+| 2024–2026 | AS-IS baseline | Fingerprint, 0 % NFC |
+| January 2027 | TO-BE simulation | NFC card, 95 % adoption |
+| 2027 annual | TO-BE target | Not a measurement |
 
-La base de demostración contiene **280 trabajadores**, **2 sedes**, **722,242 marcaciones**, **96,034 incidencias** y **37 periodos mensuales**. Las cifras de 2024 a 2026 son parámetros del caso; enero de 2027 es una simulación.
+The demo database holds **280 employees**, **2 campuses**, **722,242 marks**, **96,034 incidents** and **37 monthly periods**. Values from 2024 to 2026 are case parameters; January 2027 is a simulation.
 
-## Stack
+## Tech Stack
 
 - Python 3.11+ · Flask 3 · SQLAlchemy · Flask-Login · Flask-WTF
-- SQLite · Jinja2 · CSS propio · Chart.js local
+- SQLite · Jinja2 · custom CSS · local Chart.js
 - WeasyPrint · openpyxl
 - pytest · Selenium · ruff
 
-## Estructura
+## Project Structure
 
 ```text
 .
 ├── app/
-│   ├── auth/           # acceso, bloqueo y auditoría de sesión
-│   ├── kiosk/          # marcación NFC y reglas R-01 a R-10
-│   ├── incidents/      # incidencias, justificaciones y aprobaciones
-│   ├── attendance/     # asistencia diaria, personal, fichas y horarios
-│   ├── reports/        # preconsolidado, cierre, consolidado anual y exportaciones
-│   ├── dashboard/      # KPI, series históricas y operación
-│   ├── audit/          # registro legible y exportación
-│   ├── admin/          # catálogos, tarjetas, lectores y usuarios
-│   ├── main/           # inicio y páginas base
+│   ├── auth/           # sign-in, lockout and session audit
+│   ├── kiosk/          # NFC check-in and rules R-01 to R-10
+│   ├── incidents/      # incidents, justifications and approvals
+│   ├── attendance/     # daily board, people, employee files and schedules
+│   ├── reports/        # pre-consolidation, close, annual report and exports
+│   ├── dashboard/      # KPIs, historical series and operation
+│   ├── audit/          # readable event log and CSV export
+│   ├── admin/          # catalogs, cards, readers and users
+│   ├── main/           # home and base pages
 │   ├── templates/      # Jinja2
-│   └── static/         # CSS, JS, fuentes y Chart.js
-├── seeds/              # datos maestros e históricos
-├── tests/              # 135 pruebas
-├── scripts/            # validación, QA, capturas y migración
+│   └── static/         # CSS, JS, fonts and Chart.js
+├── seeds/              # master and historical data
+├── tests/              # 135 tests
+├── scripts/            # validation, QA, screenshots and migration
 ├── docs/
-│   ├── capturas/v7/    # 31 capturas + manifiesto
-│   ├── readme/         # imágenes de esta presentación
-│   └── v7/             # control de cifras del documento
+│   ├── capturas/v7/    # 31 screenshots + manifest
+│   ├── readme/         # images used in this README
+│   └── v7/             # document-to-database correlation report
 ├── schema.sql
 ├── Makefile
 ├── requirements.txt
 └── run.py
 ```
 
-## Puesta en marcha
+## Run Locally
 
-Requiere Python 3.11 o superior.
+Requires Python 3.11 or newer.
 
 ```bash
 git clone https://github.com/AdrianChavezHuaman/utsm-nfc-attendance.git
@@ -133,19 +136,19 @@ cd utsm-nfc-attendance
 python3 -m venv .venv
 .venv/bin/pip install -r requirements.txt
 
-# Base maestra: sedes, áreas, 280 trabajadores, tarjetas y usuarios
+# Master data: campuses, areas, 280 employees, cards and users
 .venv/bin/flask --app run.py bootstrap
 
-# Línea base 2024-2026 + enero 2027 simulado (puede tardar unos minutos)
+# Baseline 2024-2026 + simulated January 2027 (may take a few minutes)
 make seed-historico
 
-# Servidor local
+# Local server
 .venv/bin/python run.py
 ```
 
-Abre **http://127.0.0.1:5000**.
+Open **http://127.0.0.1:5000**.
 
-Atajos equivalentes:
+Equivalent shortcuts:
 
 ```bash
 make setup
@@ -154,58 +157,68 @@ make seed-historico
 make run
 ```
 
-## Cuentas de demostración
+## Data and Demo Behavior
 
-| Rol | Correo | Contraseña |
-| --- | --- | --- |
-| Administrador | `admin@utsm.edu.pe` | `admin123` |
-| Jefe de RR. HH. | `jefe@utsm.edu.pe` | `jefe123` |
-| Analista de RR. HH. | `analista@utsm.edu.pe` | `analista123` |
-| Coordinador de área | `coordinador@utsm.edu.pe` | `coordinador123` |
-| Trabajador | `trabajador@utsm.edu.pe` | `trabajador123` |
+- The database is **SQLite**, stored locally under `instance/` and excluded from the repository.
+- Seed data covers **2024–2026** as the AS-IS baseline and **January 2027** as a TO-BE simulation.
+- All names, emails, cards and marks are fictitious.
+- There is **no real NFC reader**: the kiosk uses demo cards.
+- The project does **not** integrate with payroll or the academic system.
+- The improvement is a **design estimate**, not a measured result; an eight-week pilot is left as future work.
 
-El administrador ve todo. El analista trabaja con asistencia, personal, consolidado y auditoría. El coordinador solo ve su área y el trabajador solo su ficha.
-
-## Pruebas y calidad
+## Tests and Quality
 
 ```bash
-make test                 # 135 pruebas
-make smoke                # 24 comprobaciones de extremo a extremo
-make validar-historico    # correlación con la Tabla 9 del documento
-make shots-v7             # capturas del anexo (requiere el servidor)
+make test                 # 135 tests
+make smoke                # 24 end-to-end checks
+make validar-historico    # correlation against the case baseline
+make shots-v7             # annex screenshots (server required)
 ```
 
-- **135 pruebas** de auth, reglas, kiosco, incidencias, reportes, KPI, auditoría, administración e histórico.
-- **24/24** comprobaciones de humo.
-- **QA visual** a 1440, 390 y 320 px sin desborde horizontal.
-- **Auditoría** con lectura humana y JSON técnico plegado.
+- **135 tests** covering auth, rules, kiosk, incidents, reports, KPIs, audit, admin and historical data.
+- **24/24** smoke checks.
+- **Visual QA** at 1440, 390 and 320 px with no horizontal overflow.
+- **Readable audit** with a human explanation and collapsed technical JSON.
 
-## Capturas y documentación
-
-- `docs/capturas/v7/`: 31 capturas del prototipo y `MANIFIESTO.md` con la propuesta APA (A1–A31).
-- `docs/v7/CORRELACION.md`: control de las cifras del documento frente a la base.
-- `DESIGN.md`: tokens y criterios del sistema visual.
-- El informe académico se entrega aparte.
+## Security
 
 <p align="center">
-  <img src="docs/readme/ficha.png" width="49%" alt="Ficha individual">
-  <img src="docs/readme/auditoria.png" width="49%" alt="Detalle de auditoría">
+  <img src="docs/readme/seguridad.png" width="62%" alt="Blocked sign-in">
 </p>
 
-## Alcance y límites
+- Five failed attempts lock the account for 15 minutes and write a `LOGIN_BLOQUEADO` audit event.
+- Sessions expire after 30 minutes of inactivity.
+- Passwords are stored as hashes; the app never stores plain text.
+- Private pages send `Cache-Control: no-store`.
+- Responses include `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy` and `Permissions-Policy`.
+- A single error message avoids revealing whether an email exists.
 
-- **Datos ficticios**: la UTSM no existe; no son mediciones de una institución real.
-- **Sin lector NFC físico**: el kiosco se opera con tarjetas de demostración.
-- **Local**: no incluye hosting, PostgreSQL ni integración con planilla.
-- **La mejora no está demostrada**: se estima y se deja un piloto de ocho semanas como validación.
-- **Seguridad de prototipo**: bloqueo tras cinco intentos, sesión de 30 minutos, cookies `HttpOnly`, `SameSite=Lax` y cabeceras básicas.
+## Documentation
 
-## English
+- `docs/capturas/v7/`: 31 screenshots and `MANIFIESTO.md` with the APA figure proposal (A1–A31).
+- `docs/v7/CORRELACION.md`: document-to-database control of every key figure.
+- `DESIGN.md`: visual tokens and interface criteria.
+- The academic report is delivered separately.
 
-A local attendance-control prototype for a fictional university (UTSM). It simulates NFC card check-ins, applies ten business rules, manages incidents and digital justifications, consolidates monthly and annual reports, and records every change in an audit log. Built with Flask, SQLite, Jinja2 and Chart.js; 135 tests and 24 end-to-end checks. All data is fictitious and the improvement is a design estimate, not a measured result.
+<p align="center">
+  <img src="docs/readme/ficha.png" width="49%" alt="Employee file">
+  <img src="docs/readme/auditoria.png" width="49%" alt="Audit detail">
+</p>
 
-## Autor
+## Limitations
+
+- **Fictitious data**: UTSM does not exist and the figures are not real measurements.
+- **No real NFC hardware**: the kiosk uses demo cards.
+- **Local only**: no hosting, PostgreSQL or payroll integration.
+- **No live demo on GitHub Pages**: this is a Flask app and needs a running server.
+- **Academic scope**: the improvement is projected, not proven.
+
+## Español
+
+Prototipo local de control de asistencia para la UTSM, una institución ficticia de dos sedes. Registra marcaciones con tarjeta NFC, clasifica incidencias, recibe justificaciones digitales, consolida el mes y el año, y audita cada cambio. Incluye kiosco, asistencia diaria, fichas por trabajador, horarios semanales, cierre mensual, consolidado anual, corrección de marcas y control de acceso por roles. Está construido con Flask, SQLite, Jinja2 y Chart.js, con 135 pruebas y 24 comprobaciones de extremo a extremo. Todos los datos son ficticios y la mejora es una estimación de diseño, no una medición real.
+
+## Author
 
 **Adrian Chavez Huaman** · [GitHub](https://github.com/AdrianChavezHuaman)
 
-Proyecto académico de la Facultad de Ingeniería y Arquitectura. Uso educativo.
+Academic project, Faculty of Engineering and Architecture. Educational use.
