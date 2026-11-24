@@ -1,0 +1,7 @@
+"""Blueprint de incidencias y justificaciones."""
+
+from flask import Blueprint
+
+incidents_bp = Blueprint("incidents", __name__, template_folder="../templates")
+
+from . import routes  # noqa: E402,F401

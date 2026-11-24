@@ -1,0 +1,175 @@
+{% extends "base_public.html" %}
+{% from "_icons.html" import icon %}
+
+{% block title %}Kiosco de marcación · UTSM{% endblock %}
+{% block body_class %}kiosk-body{% endblock %}
+{% block styles %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/kiosk.css') }}">
+{% endblock %}
+
+{% block body %}
+<header class="kiosk-topbar">
+  <div class="kiosk-brand">
+    <span class="logo-mark">{{ icon('logo', 23) }}</span>
+    <div class="kiosk-brand-text">
+      <span class="kiosk-brand-name">UTSM</span>
+      <span class="kiosk-brand-sub">Kiosco de marcación</span>
+    </div>
+  </div>
+
+  <div class="kiosk-topbar-right">
+    <div class="kiosk-clock">
+      <span class="kiosk-clock-date" data-clock-date>{{ hoy_legible }}</span>
+      <strong class="kiosk-clock-time" data-clock-time>{{ hora_actual }}</strong>
+    </div>
+    <button type="button" class="kiosk-sound" data-sound-toggle aria-pressed="true">
+      Sonido activo
+    </button>
+    {% if current_user.is_authenticated %}
+      <a class="kiosk-panel-link" href="{{ url_for('main.inicio') }}">Volver al panel</a>
+    {% else %}
+      <a class="kiosk-panel-link" href="{{ url_for('auth.login') }}">Volver al inicio</a>
+    {% endif %}
+  </div>
+</header>
+
+<main class="kiosk-main" id="contenido">
+  <div class="kiosk-workspace">
+    <section class="kiosk-card" aria-labelledby="kiosk-title">
+      <header class="kiosk-card-head">
+        <div>
+          <h1 id="kiosk-title">Registra tu asistencia</h1>
+          <p>Acerca tu tarjeta al lector o usa una tarjeta de demostración.</p>
+        </div>
+        <span class="badge badge--brass">Modo demostración</span>
+      </header>
+
+      <form method="post" action="{{ url_for('kiosk.index') }}"
+            data-kiosk-form data-api="{{ url_for('kiosk.api_marca') }}" novalidate>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <fieldset class="kiosk-type">
+          <legend>Tipo de marcación</legend>
+          <label class="kiosk-type-option">
+            <input type="radio" name="tipo" value="ingreso" checked>
+            <span>{{ icon('check', 18) }} Ingreso</span>
+          </label>
+          <label class="kiosk-type-option">
+            <input type="radio" name="tipo" value="salida">
+            <span>{{ icon('logout', 18) }} Salida</span>
+          </label>
+        </fieldset>
+
+        <div class="kiosk-field">
+          <label class="kiosk-label" for="uid">UID de tarjeta</label>
+          <div class="kiosk-uid-wrap">
+            <span class="kiosk-uid-icon">{{ icon('card', 23) }}</span>
+            <input id="uid" name="uid" class="kiosk-uid" type="text"
+                   placeholder="UTSM-0001" autocomplete="off" autocapitalize="characters"
+                   spellcheck="false" autofocus>
+          </div>
+        </div>
+
+        <div class="kiosk-readers">
+          <label class="kiosk-field">
+            <span class="kiosk-label">Sede</span>
+            <select id="sede" class="kiosk-select">
+              {% for sede in sedes %}
+                <option value="{{ sede.id_sede }}">{{ sede.nombre }}</option>
+              {% endfor %}
+            </select>
+          </label>
+          <label class="kiosk-field">
+            <span class="kiosk-label">Lector</span>
+            <select id="lector" name="id_lector" class="kiosk-select">
+              {% for lector in lectores %}
+                <option value="{{ lector.id_lector }}" data-sede="{{ lector.id_sede }}"
+                        data-tipo="{{ lector.tipo }}">
+                  {{ lector.nombre }}
+                </option>
+              {% endfor %}
+            </select>
+          </label>
+        </div>
+
+        <button type="submit" class="btn btn--primary kiosk-submit" data-kiosk-submit>
+          <span class="btn-label" data-kiosk-submit-label>Registrar ingreso</span>
+          {{ icon('arrow-right', 19, 'btn-arrow') }}
+        </button>
+        <p class="kiosk-hint">La hora se registra en el servidor del kiosco. No se usan datos reales.</p>
+        <noscript>
+          <p class="kiosk-hint">Sin JavaScript, elige el lector manualmente y pulsa Registrar.</p>
+        </noscript>
+      </form>
+    </section>
+
+    <aside class="kiosk-result" id="kiosk-result" aria-live="polite">
+      {% if resultado %}
+        {% set badge = 'jade' if resultado.estado == 'valida' else ('brass' if resultado.estado in ('observada', 'duplicado') else 'danger') %}
+        {% set estado_label = 'Registrado' if resultado.estado == 'valida' else ('Observado' if resultado.estado == 'observada' else ('Duplicado' if resultado.estado == 'duplicado' else 'Rechazado')) %}
+        <div class="result result--{{ resultado.estado }}">
+          <span class="result-icon">
+            {% if resultado.estado == 'valida' %}{{ icon('check', 28) }}
+            {% elif resultado.estado == 'error' %}{{ icon('x', 28) }}
+            {% else %}{{ icon('alert', 28) }}{% endif %}
+          </span>
+          <span class="badge badge--{{ badge }}">{{ estado_label }}</span>
+          <h2>{{ resultado.titulo }}</h2>
+          <p>{{ resultado.mensaje }}</p>
+          {% if resultado.trabajador %}
+            <dl class="result-details">
+              <div><dt>Trabajador</dt><dd>{{ resultado.trabajador }}</dd></div>
+              {% if resultado.area %}<div><dt>Área</dt><dd>{{ resultado.area }}</dd></div>{% endif %}
+              <div><dt>Tipo</dt><dd>{{ resultado.tipo }}</dd></div>
+              <div><dt>Hora</dt><dd class="mono">{{ resultado.hora }}</dd></div>
+              <div><dt>Sede</dt><dd>{{ resultado.sede }}</dd></div>
+              {% if resultado.incidencia_label %}
+                <div><dt>Incidencia</dt><dd>{{ resultado.incidencia_label }}</dd></div>
+              {% endif %}
+            </dl>
+          {% endif %}
+        </div>
+      {% else %}
+        <div class="result-idle">
+          <span class="result-idle-icon">{{ icon('scan', 36) }}</span>
+          <h2>Acerca tu tarjeta</h2>
+          <p>El lector está listo. La confirmación aparecerá aquí.</p>
+          <span class="result-idle-hint mono">NFC · UTSM</span>
+        </div>
+      {% endif %}
+    </aside>
+  </div>
+
+  <section class="kiosk-sim" aria-labelledby="sim-title">
+    <div class="kiosk-sim-head">
+      <div>
+        <h2 id="sim-title">Tarjetas de demostración</h2>
+        <p>Selecciona una tarjeta para completar el UID y luego pulsa Registrar.</p>
+      </div>
+      <span class="badge badge--muted">Solo simulación</span>
+    </div>
+    <div class="uid-grid">
+      {% for tarjeta in tarjetas_demo %}
+        <button type="button" class="uid-chip" data-uid="{{ tarjeta.uid }}">
+          <span class="uid-chip-uid mono">{{ tarjeta.uid }}</span>
+          <span class="uid-chip-name">{{ tarjeta.nombre }}</span>
+          <span class="uid-chip-area">{{ tarjeta.area }}</span>
+        </button>
+      {% endfor %}
+    </div>
+  </section>
+</main>
+
+<footer class="kiosk-footer">
+  <span>UTSM · Control de Asistencia · Proceso AP-GTH-01</span>
+  <span>Datos ficticios · {{ config.APP_VERSION }}</span>
+</footer>
+
+<template id="tpl-icon-check">{{ icon('check', 28) }}</template>
+<template id="tpl-icon-alert">{{ icon('alert', 28) }}</template>
+<template id="tpl-icon-x">{{ icon('x', 28) }}</template>
+{% endblock %}
+
+{% block scripts %}
+  <script src="{{ url_for('static', filename='js/kiosk.js') }}" defer></script>
+{% endblock %}

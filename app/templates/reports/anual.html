@@ -1,0 +1,299 @@
+{% extends "base.html" %}
+{% from "_icons.html" import icon %}
+
+{% block title %}Consolidado anual{% endblock %}
+{% block page_title %}Consolidado anual{% endblock %}
+{% block page_subtitle %}Comparativas AS-IS / TO-BE{% endblock %}
+{% block styles %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/incidents.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/reports.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/annual.css') }}">
+{% endblock %}
+
+{% block content %}
+<header class="page-head">
+  <div class="page-head-copy">
+    <h2>Consolidado {{ 'anual' if datos.vista == 'anual' else datos.vista_codigo }} {{ datos.anio }}</h2>
+    <p>
+      {% if datos.vista == 'anual' %}
+        Matriz enero–diciembre, comparación de eneros y evolución anual de los indicadores del caso.
+      {% else %}
+        {{ datos.vista_label }} ({{ datos.vista_rango }}) con los totales del periodo y su avance frente a la línea base.
+      {% endif %}
+    </p>
+    <div class="page-tags">
+      <span class="badge badge--{{ 'brass' if datos.anio == 2027 else 'jade' }}">
+        {{ 'TO-BE simulado' if datos.anio == 2027 else 'AS-IS con huella' }}
+      </span>
+      <span class="badge badge--muted">{{ datos.resumen.total_marcas|miles }} marcas</span>
+      {% if datos.tiene_filtros %}
+        <span class="badge badge--brass">Filtros operativos activos</span>
+      {% endif %}
+    </div>
+  </div>
+  <div class="report-actions">
+    <a class="btn btn--ghost btn--sm" href="{{ url_for('reports.periodos') }}">Consolidado mensual</a>
+    <a class="btn btn--ghost btn--sm" href="{{ url_for('reports.anual_exportar', formato='csv', **export_args) }}">CSV</a>
+    <a class="btn btn--ghost btn--sm" href="{{ url_for('reports.anual_exportar', formato='excel', **export_args) }}">Excel</a>
+    <a class="btn btn--ghost btn--sm" href="{{ url_for('reports.anual_exportar', formato='pdf', **export_args) }}">PDF</a>
+  </div>
+</header>
+
+<form method="get" action="{{ url_for('reports.anual') }}" class="filter-bar annual-filters">
+  <label class="filter-field">
+    <span>Año</span>
+    <select name="anio" class="filter-select">
+      {% for anio in opciones.anios %}
+        <option value="{{ anio }}" {{ 'selected' if filtros.anio == anio }}>{{ anio }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <label class="filter-field">
+    <span>Sede</span>
+    <select name="sede" class="filter-select">
+      <option value="">Todas</option>
+      {% for sede in opciones.sedes %}
+        <option value="{{ sede.id_sede }}" {{ 'selected' if filtros.sede == sede.id_sede }}>{{ sede.nombre }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <label class="filter-field">
+    <span>Área</span>
+    <select name="area" class="filter-select">
+      <option value="">Todas</option>
+      {% for area in opciones.areas %}
+        <option value="{{ area.id_area }}" {{ 'selected' if filtros.area == area.id_area }}>{{ area.nombre }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <label class="filter-field">
+    <span>Tipo de personal</span>
+    <select name="tipo" class="filter-select">
+      <option value="">Todos</option>
+      {% for clave, nombre in opciones.tipos %}
+        <option value="{{ clave }}" {{ 'selected' if filtros.tipo == clave }}>{{ nombre }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <button type="submit" class="btn btn--primary btn--sm">Aplicar filtros</button>
+  <a class="btn btn--ghost btn--sm" href="{{ url_for('reports.anual') }}">Limpiar</a>
+</form>
+
+{% if datos.tiene_filtros %}
+  <p class="annual-filter-note">
+    {{ icon('info', 14) }}
+    Los filtros de sede, área y tipo se aplican a las marcaciones. Los KPI del caso siguen siendo anuales y globales.
+  </p>
+{% endif %}
+
+<div class="view-switch annual-view-switch" role="group" aria-label="Vista del consolidado">
+  <a class="view-switch-option {{ 'is-active' if datos.vista == 'anual' }}"
+     href="{{ url_for('reports.anual', vista='anual', **vista_args) }}">Anual</a>
+  <a class="view-switch-option {{ 'is-active' if datos.vista == 's1' }}"
+     href="{{ url_for('reports.anual', vista='s1', **vista_args) }}">Primer semestre</a>
+  <a class="view-switch-option {{ 'is-active' if datos.vista == 's2' }}"
+     href="{{ url_for('reports.anual', vista='s2', **vista_args) }}">Segundo semestre</a>
+</div>
+
+{% if datos.anio == 2027 %}
+  <div class="period-banner period-banner--simulated">
+    {{ icon('spark', 17) }}
+    <span>2027 anual es la meta TO-BE. Enero 2027 es un escenario simulado con NFC; no es una medición real.</span>
+  </div>
+{% endif %}
+
+<section class="annual-summary" aria-label="Resumen del periodo">
+  <div class="annual-summary-cell">
+    <span>Marcas</span>
+    <strong class="mono">{{ datos.resumen.total_marcas|miles }}</strong>
+  </div>
+  <div class="annual-summary-cell">
+    <span>Incidencias</span>
+    <strong class="mono">{{ datos.resumen.total_incidencias|miles }}</strong>
+  </div>
+  <div class="annual-summary-cell">
+    <span>Calidad operativa</span>
+    <strong class="mono">{{ datos.resumen.calidad }} %</strong>
+  </div>
+  <div class="annual-summary-cell">
+    <span>Adopción NFC</span>
+    <strong class="mono">{{ datos.resumen.nfc }} %</strong>
+  </div>
+  <div class="annual-summary-cell">
+    <span>Horas</span>
+    <strong class="mono">{{ datos.resumen.horas|miles(2) }}</strong>
+  </div>
+  <div class="annual-summary-cell">
+    <span>Trabajadores</span>
+    <strong class="mono">{{ datos.resumen.trabajadores|miles }}</strong>
+  </div>
+</section>
+
+<section class="panel" aria-labelledby="matriz-title">
+  <header class="panel-head">
+    <div>
+      <h3 id="matriz-title">{{ 'Matriz mensual' if datos.vista == 'anual' else 'Matriz del semestre' }}</h3>
+      <p>
+        {% if datos.vista == 'anual' %}
+          Los doce meses del año seleccionado. Los periodos abiertos se muestran con su estado actual.
+        {% else %}
+          Los seis meses del {{ datos.vista_label|lower }}. Los periodos abiertos se muestran con su estado actual.
+        {% endif %}
+      </p>
+    </div>
+    <span class="badge badge--muted">{{ datos.meses|length }} meses</span>
+  </header>
+  <div class="table-wrap">
+    <table class="report-table annual-table">
+      <thead>
+        <tr>
+          <th>Mes</th>
+          <th class="is-number">Marcas</th>
+          <th class="is-number">Incidencias</th>
+          <th class="is-number">Calidad</th>
+          <th class="is-number">NFC</th>
+          <th class="is-number">Horas</th>
+          <th>Estado</th>
+          <th>Escenario</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for mes in datos.meses %}
+          <tr>
+            <td><span class="report-worker">{{ mes.etiqueta }}</span></td>
+            <td class="is-number mono">{{ mes.marcas|miles }}</td>
+            <td class="is-number mono">{{ mes.incidencias|miles }}</td>
+            <td class="is-number mono">{{ mes.calidad }} %</td>
+            <td class="is-number mono">{{ mes.nfc }} %</td>
+            <td class="is-number mono">{{ mes.horas|miles(2) }}</td>
+            <td><span class="badge badge--{{ mes.badge }}">{{ mes.estado }}</span></td>
+            <td>
+              {% if mes.marcas %}
+                <span class="badge badge--{{ 'brass' if mes.es_simulacion else 'muted' }}">
+                  {{ 'TO-BE simulado' if mes.es_simulacion else 'AS-IS' }}
+                </span>
+              {% else %}
+                <span class="badge badge--muted">Sin datos</span>
+              {% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+{% if datos.vista == 'anual' %}
+<div class="annual-compare-grid">
+  <section class="panel" aria-labelledby="eneros-title">
+    <header class="panel-head">
+      <div>
+        <h3 id="eneros-title">Enero vs enero</h3>
+        <p>La calidad y la adopción NFC de cada enero.</p>
+      </div>
+      <span class="badge badge--muted">4 años</span>
+    </header>
+    <div class="annual-compare-inner">
+      <div class="annual-chart-surface">
+        <canvas id="chart-eneros"></canvas>
+      </div>
+      <div class="table-wrap annual-table-wrap">
+        <table class="report-table annual-compare-table">
+        <thead>
+          <tr>
+            <th>Año</th>
+            <th class="is-number">Marcas</th>
+            <th class="is-number">Incid.</th>
+            <th class="is-number">Calidad</th>
+            <th class="is-number">NFC</th>
+            <th class="is-number">Horas</th>
+            <th>Escenario</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in datos.eneros %}
+            <tr>
+              <td class="mono">{{ item.anio }}</td>
+              <td class="is-number mono">{{ item.marcas|miles }}</td>
+              <td class="is-number mono">{{ item.incidencias|miles }}</td>
+              <td class="is-number mono">{{ item.calidad }} %</td>
+              <td class="is-number mono">{{ item.nfc }} %</td>
+              <td class="is-number mono">{{ item.horas|miles(2) }}</td>
+              <td>
+                <span class="badge badge--{{ 'brass' if item.es_simulacion else 'muted' }}">
+                  {{ 'TO-BE simulado' if item.es_simulacion else 'AS-IS' }}
+                </span>
+              </td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel" aria-labelledby="anual-title">
+    <header class="panel-head">
+      <div>
+        <h3 id="anual-title">Año vs año</h3>
+        <p>Indicadores del caso y operación disponible.</p>
+      </div>
+      <span class="badge badge--muted">Tabla 9</span>
+    </header>
+    <div class="annual-compare-inner">
+      <div class="annual-chart-surface">
+        <canvas id="chart-anual"></canvas>
+      </div>
+      <div class="table-wrap annual-table-wrap">
+        <table class="report-table annual-compare-table annual-kpi-table">
+        <thead>
+          <tr>
+            <th>Año</th>
+            <th class="is-number">Oportunidad</th>
+            <th class="is-number">Eficiencia</th>
+            <th class="is-number">Calidad KPI</th>
+            <th class="is-number">Extraviadas</th>
+            <th class="is-number">Costo</th>
+            <th class="is-number">NFC</th>
+            <th>Escenario</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in datos.comparativa %}
+            <tr>
+              <td class="mono">{{ item.anio }}</td>
+              <td class="is-number mono">{{ item.oportunidad }} %</td>
+              <td class="is-number mono">{{ item.eficiencia }} h</td>
+              <td class="is-number mono">{{ item.calidad_kpi }} %</td>
+              <td class="is-number mono">{{ item.extraviadas }} %</td>
+              <td class="is-number mono">S/ {{ '{:,.2f}'.format(item.costo) }}</td>
+              <td class="is-number mono">{{ item.nfc }} %</td>
+              <td><span class="badge badge--{{ 'brass' if item.anio == 2027 else 'muted' }}">{{ 'Simulado' if item.anio == 2027 else item.escenario }}</span></td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+</div>
+{% else %}
+  <p class="panel-note">
+    La comparación enero vs enero y año vs año está disponible en la vista anual.
+    Aquí se muestran los totales del semestre seleccionado.
+  </p>
+{% endif %}
+
+<p class="panel-note">
+  La calidad operativa se calcula con las marcas e incidencias de la base. Los KPI de oportunidad,
+  eficiencia, extraviadas y costo provienen de los indicadores anuales. 2027 combina la meta TO-BE
+  con el escenario simulado de enero.
+</p>
+
+<script type="application/json" id="annual-chart-data">{{ datos.chart_data|tojson }}</script>
+{% endblock %}
+
+{% block scripts %}
+  <script src="{{ url_for('static', filename='vendor/chart.umd.min.js') }}" defer></script>
+  <script src="{{ url_for('static', filename='js/annual.js') }}" defer></script>
+{% endblock %}

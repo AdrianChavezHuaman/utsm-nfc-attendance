@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Consolidado {{ 'anual' if datos.vista == 'anual' else datos.vista_codigo }} {{ datos.anio }} · UTSM</title>
+  <style>
+    @page {
+      size: A4 landscape;
+      margin: 13mm 12mm 15mm;
+      @bottom-left { content: "UTSM · Control de Asistencia"; font-size: 7pt; color: #607267; }
+      @bottom-right { content: "Página " counter(page) " de " counter(pages); font-size: 7pt; color: #607267; }
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "DejaVu Sans", Arial, sans-serif;
+      color: #1b261f;
+      background: #fff;
+      font-size: 8pt;
+      line-height: 1.4;
+    }
+    .top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      padding-bottom: 8px;
+      border-bottom: 2px solid #14532d;
+    }
+    .brand { display: flex; align-items: center; gap: 9px; }
+    .mark {
+      display: grid;
+      place-items: center;
+      width: 30px;
+      height: 30px;
+      border-radius: 7px;
+      border: 1px solid #b9c9b7;
+      background: #e9f2ea;
+      color: #14532d;
+      font-weight: 700;
+      font-size: 9pt;
+    }
+    .brand strong { display: block; font-size: 10pt; color: #14532d; }
+    .brand span { display: block; font-size: 7pt; color: #52645a; }
+    .meta { text-align: right; font-size: 7pt; color: #52645a; }
+    h1 {
+      margin: 11px 0 1px;
+      font-family: "DejaVu Serif", Georgia, serif;
+      font-size: 18pt;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      color: #0b2e21;
+    }
+    .subtitle { margin: 0 0 8px; font-size: 8pt; color: #52645a; }
+    .badge {
+      display: inline-block;
+      margin: 0 0 8px;
+      padding: 2px 7px;
+      border: 1px solid #e3d3a8;
+      border-radius: 9px;
+      background: #fbf6e8;
+      color: #855a16;
+      font-size: 7pt;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .metrics {
+      display: table;
+      width: 100%;
+      margin: 8px 0 10px;
+      border-collapse: collapse;
+    }
+    .metric {
+      display: table-cell;
+      width: 16.6%;
+      padding: 7px 9px;
+      border: 1px solid #e0e8e1;
+      background: #f7faf7;
+    }
+    .metric span { display: block; font-size: 6.5pt; color: #607267; text-transform: uppercase; letter-spacing: 0.05em; }
+    .metric strong { display: block; margin-top: 2px; font-size: 12pt; color: #1b261f; }
+    h2 {
+      margin: 10px 0 4px;
+      padding-bottom: 3px;
+      border-bottom: 1px solid #d7e5da;
+      color: #14532d;
+      font-size: 9pt;
+    }
+    table { width: 100%; border-collapse: collapse; }
+    th {
+      padding: 3.5px 4px;
+      border-bottom: 1px solid #b9c9b7;
+      background: #e9f2ea;
+      color: #14532d;
+      font-size: 6.3pt;
+      text-align: left;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+    td { padding: 3px 4px; border-bottom: 0.5px solid #e0e8e1; vertical-align: top; }
+    tr:nth-child(even) td { background: #f7faf7; }
+    .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .mono { font-family: "DejaVu Sans Mono", monospace; font-size: 6.9pt; }
+    .note { margin-top: 8px; padding-top: 5px; border-top: 1px solid #e0e8d1; font-size: 6.7pt; color: #607267; }
+    .scenario { white-space: nowrap; }
+    .avoid { page-break-inside: avoid; }
+  </style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">
+      <span class="mark">UTSM</span>
+      <div>
+        <strong>Control de Asistencia</strong>
+        <span>Reporte anual del proceso AP-GTH-01</span>
+      </div>
+    </div>
+    <div class="meta">
+      <div>Generado: <strong>{{ generado.strftime('%d/%m/%Y %H:%M') }}</strong></div>
+      <div>Periodo: <strong>{{ datos.anio }}</strong></div>
+    </div>
+  </div>
+
+  <h1>Consolidado {{ 'anual' if datos.vista == 'anual' else datos.vista_codigo }} {{ datos.anio }}</h1>
+  <p class="subtitle">
+    {% if datos.vista == 'anual' %}
+      Matriz mensual y comparación con la línea base AS-IS y la meta TO-BE.
+    {% else %}
+      {{ datos.vista_label }} ({{ datos.vista_rango }}) y su avance frente a la línea base.
+    {% endif %}
+  </p>
+  {% if datos.anio == 2027 %}
+    <span class="badge">TO-BE simulado · enero 2027</span>
+  {% endif %}
+
+  <div class="metrics">
+    <div class="metric"><span>Marcas</span><strong>{{ datos.resumen.total_marcas|miles }}</strong></div>
+    <div class="metric"><span>Incidencias</span><strong>{{ datos.resumen.total_incidencias|miles }}</strong></div>
+    <div class="metric"><span>Calidad</span><strong>{{ datos.resumen.calidad }} %</strong></div>
+    <div class="metric"><span>NFC</span><strong>{{ datos.resumen.nfc }} %</strong></div>
+    <div class="metric"><span>Horas</span><strong>{{ datos.resumen.horas|miles(2) }}</strong></div>
+    <div class="metric"><span>Trabajadores</span><strong>{{ datos.resumen.trabajadores|miles }}</strong></div>
+  </div>
+
+  <section class="avoid">
+    <h2>{{ 'Matriz mensual' if datos.vista == 'anual' else 'Matriz del semestre' }}</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Mes</th><th class="num">Marcas</th><th class="num">Incidencias</th>
+          <th class="num">Calidad</th><th class="num">NFC</th><th class="num">Horas</th>
+          <th>Estado</th><th>Escenario</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for mes in datos.meses %}
+          <tr>
+            <td>{{ mes.etiqueta }}</td>
+            <td class="num mono">{{ mes.marcas|miles }}</td>
+            <td class="num mono">{{ mes.incidencias|miles }}</td>
+            <td class="num mono">{{ mes.calidad }} %</td>
+            <td class="num mono">{{ mes.nfc }} %</td>
+            <td class="num mono">{{ mes.horas|miles(2) }}</td>
+            <td>{{ mes.estado }}</td>
+            <td class="scenario">{{ 'TO-BE simulado' if mes.es_simulacion else 'AS-IS' }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </section>
+
+  {% if datos.vista == 'anual' %}
+  <section class="avoid">
+    <h2>Enero vs enero</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Año</th><th class="num">Marcas</th><th class="num">Incidencias</th>
+          <th class="num">Calidad</th><th class="num">NFC</th><th class="num">Horas</th><th>Escenario</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in datos.eneros %}
+          <tr>
+            <td>{{ item.anio }}</td>
+            <td class="num mono">{{ item.marcas|miles }}</td>
+            <td class="num mono">{{ item.incidencias|miles }}</td>
+            <td class="num mono">{{ item.calidad }} %</td>
+            <td class="num mono">{{ item.nfc }} %</td>
+            <td class="num mono">{{ item.horas|miles(2) }}</td>
+            <td>{{ 'TO-BE simulado' if item.es_simulacion else 'AS-IS' }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </section>
+
+  <section class="avoid">
+    <h2>Año vs año · Indicadores del caso</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Año</th><th class="num">Oportunidad</th><th class="num">Eficiencia</th>
+          <th class="num">Calidad KPI</th><th class="num">Extraviadas</th>
+          <th class="num">Costo</th><th class="num">NFC</th><th>Escenario</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in datos.comparativa %}
+          <tr>
+            <td>{{ item.anio }}</td>
+            <td class="num mono">{{ item.oportunidad }} %</td>
+            <td class="num mono">{{ item.eficiencia }} h</td>
+            <td class="num mono">{{ item.calidad_kpi }} %</td>
+            <td class="num mono">{{ item.extraviadas }} %</td>
+            <td class="num mono">S/ {{ '{:,.2f}'.format(item.costo) }}</td>
+            <td class="num mono">{{ item.nfc }} %</td>
+            <td>{{ item.escenario }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </section>
+  {% endif %}
+
+  <p class="note">
+    La calidad operativa se calcula con las marcas e incidencias de la base. Los KPI de oportunidad,
+    eficiencia, extraviadas y costo provienen de los indicadores anuales. 2027 combina la meta TO-BE
+    con el escenario simulado de enero. Las cifras de 2024–2026 son la línea base AS-IS con huella.
+  </p>
+</body>
+</html>

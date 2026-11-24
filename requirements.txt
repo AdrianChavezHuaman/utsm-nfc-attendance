@@ -1,0 +1,17 @@
+# Shaula_efc — Control de Asistencia UTSM (prototipo local)
+# Stack fijado en el SPEC_PLAN: Flask + SQLite + Chart.js.
+# Instalar con: .venv/bin/pip install -r requirements.txt
+
+# --- Núcleo Fase 1 ---
+Flask>=3.1,<4
+Flask-SQLAlchemy>=3.1,<4
+Flask-Login>=0.6,<1
+Flask-WTF>=1.2,<2
+email-validator>=2.2,<3
+
+# --- Exportaciones (Fases 4-5) ---
+openpyxl>=3.1,<4
+weasyprint>=70,<71  # requiere pango/cairo del sistema; se usa en Fase 4
+
+# --- Pruebas ---
+pytest>=9,<10

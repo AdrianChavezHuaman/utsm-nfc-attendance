@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% from "_icons.html" import icon %}
+
+{% block title %}Bandeja de mi área{% endblock %}
+{% block page_title %}Bandeja de mi área{% endblock %}
+{% block page_subtitle %}Justificaciones{% endblock %}
+{% block styles %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/incidents.css') }}">
+{% endblock %}
+
+{% block content %}
+<header class="page-head">
+  <div class="page-head-copy">
+    <h2>Bandeja de mi área</h2>
+    <p>Revisa los sustentos de {{ area.nombre }} y decide si la incidencia queda justificada.</p>
+    <div class="page-tags">
+      <span class="badge badge--sage">{{ area.nombre }}</span>
+      <span class="badge badge--brass">Solo tu área</span>
+    </div>
+  </div>
+</header>
+
+{% include "incidents/_summary.html" %}
+
+<section class="panel" aria-labelledby="pendientes-title">
+  <header class="panel-head">
+    <div>
+      <h3 id="pendientes-title">Justificaciones por revisar</h3>
+      <p>Sustentos enviados por trabajadores de tu área.</p>
+    </div>
+    <span class="badge badge--brass">{{ pendientes | length }} pendientes</span>
+  </header>
+
+  {% if pendientes %}
+    <div class="justification-list">
+      {% for justificacion in pendientes %}
+        <article class="justification-row">
+          <div class="justification-main">
+            <span class="incident-kind">{{ justificacion.incidencia.trabajador.nombre_corto }}</span>
+            <span class="incident-meta">
+              {{ justificacion.incidencia.trabajador.area.nombre }} ·
+              {{ tipo_incidencia_label(justificacion.incidencia.tipo) }}
+            </span>
+            <span class="incident-sub mono">
+              Enviada {{ justificacion.fecha_envio.strftime('%d/%m/%Y · %H:%M') }}
+              {% if justificacion.nombre_archivo %} · {{ justificacion.nombre_archivo }}{% endif %}
+            </span>
+          </div>
+          <span class="badge badge--brass">En revisión</span>
+          <a class="btn btn--primary btn--sm"
+             href="{{ url_for('incidents.detalle', incidencia_id=justificacion.id_incidencia) }}">Revisar</a>
+        </article>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <p>No hay justificaciones pendientes en tu área.</p>
+      <p class="muted">Cuando un trabajador envíe un sustento, aparecerá aquí para su revisión.</p>
+    </div>
+  {% endif %}
+</section>
+
+<section class="panel" aria-labelledby="area-title">
+  <header class="panel-head">
+    <div>
+      <h3 id="area-title">Incidencias de mi área</h3>
+      <p>Seguimiento de las marcaciones observadas del área.</p>
+    </div>
+    <span class="badge badge--muted">{{ incidencias_area | length }} registradas</span>
+  </header>
+
+  {% if incidencias_area %}
+    <div class="incident-list">
+      {% for incidencia in incidencias_area %}
+        {% set estado = estado_incidencia(incidencia) %}
+        <article class="incident-row incident-row--area">
+          <div class="incident-main">
+            <div class="incident-line">
+              <span class="incident-kind">{{ incidencia.trabajador.nombre_corto }}</span>
+              <span class="badge badge--{{ estado.badge }}">{{ estado.label }}</span>
+            </div>
+            <span class="incident-meta">{{ tipo_incidencia_label(incidencia.tipo) }}</span>
+            <span class="incident-sub mono">{{ incidencia.marca.fecha_hora.strftime('%d/%m/%Y · %H:%M') }}</span>
+          </div>
+          <div class="incident-actions">
+            <a class="btn btn--ghost btn--sm"
+               href="{{ url_for('incidents.detalle', incidencia_id=incidencia.id_incidencia) }}">Ver detalle</a>
+          </div>
+        </article>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <p>Aún no hay incidencias en tu área.</p>
+      <p class="muted">El kiosco puede generar marcaciones de prueba para el flujo.</p>
+      <a class="btn btn--ghost btn--sm" href="{{ url_for('kiosk.index') }}">
+        {{ icon('scan', 15) }} Abrir kiosco
+      </a>
+    </div>
+  {% endif %}
+</section>
+{% endblock %}

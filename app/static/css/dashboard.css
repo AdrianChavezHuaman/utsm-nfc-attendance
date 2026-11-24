@@ -1,0 +1,340 @@
+/* ==========================================================================
+   Shaula_efc · Panel KPI y gráficos
+   ========================================================================== */
+
+.dashboard-filters {
+  align-items: flex-end;
+}
+
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.kpi-card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--white);
+  box-shadow: var(--shadow);
+}
+
+.kpi-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.kpi-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.kpi-value {
+  margin-top: 10px;
+  font-size: 38px;
+  font-weight: 750;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.kpi-value small {
+  margin-left: 3px;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0;
+  color: var(--ink-muted);
+}
+
+.kpi-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 5px 12px;
+  margin-top: 10px;
+  padding-top: 9px;
+  border-top: 1px solid #eef3ee;
+  font-size: 10px;
+  color: var(--ink-muted);
+}
+
+.kpi-meta .mono {
+  font-size: 9px;
+  color: var(--ink-faint);
+}
+
+.kpi-description {
+  margin-top: 7px;
+  font-size: 10.5px;
+  line-height: 1.5;
+  color: var(--ink-muted);
+}
+
+.kpi-card > .badge {
+  align-self: flex-start;
+  margin-top: 10px;
+}
+
+.case-context {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px 24px;
+  padding: 11px 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-2);
+}
+
+.case-context-item {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  font-size: 10.5px;
+  color: var(--ink-muted);
+}
+
+.case-context-item strong {
+  font-size: 11px;
+  color: var(--ink-soft);
+}
+
+.case-context-note {
+  margin-left: auto;
+  font-size: 9.5px;
+  color: var(--ink-faint);
+}
+
+.chart-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.chart-panel {
+  padding-bottom: 16px;
+}
+
+.chart-head {
+  align-items: flex-start;
+}
+
+.chart-toolbar {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.chart-control {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--ink-faint);
+}
+
+.chart-control .filter-select {
+  min-width: 110px;
+  height: 32px;
+  font-size: 10.5px;
+}
+
+.chart-surface {
+  position: relative;
+  min-height: 300px;
+  height: 300px;
+  padding-top: 6px;
+}
+
+.chart-surface canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.chart-surface canvas[hidden],
+.chart-surface .heatmap[hidden] {
+  display: none !important;
+}
+
+.chart-surface.is-loading::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 22px;
+  height: 22px;
+  margin: -11px 0 0 -11px;
+  border-radius: 50%;
+  border: 2px solid var(--sage-200);
+  border-top-color: var(--green-600);
+  animation: spin 0.7s linear infinite;
+}
+
+.ops-summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 14px;
+  margin: 0 0 4px;
+  font-size: 10px;
+  color: var(--ink-muted);
+}
+
+.ops-summary strong {
+  color: var(--ink-soft);
+}
+
+/* --------------------------------------------------------------------------
+   Heatmap
+   -------------------------------------------------------------------------- */
+.heatmap {
+  height: 100%;
+  overflow: auto;
+  padding: 4px 2px 8px;
+}
+
+.heatmap-grid {
+  display: grid;
+  gap: 4px;
+  min-width: 460px;
+}
+
+.heatmap-row {
+  display: contents;
+}
+
+.heatmap-label {
+  display: flex;
+  align-items: center;
+  min-height: 42px;
+  padding: 5px 8px 5px 0;
+  font-size: 10px;
+  font-weight: 550;
+  color: var(--ink-muted);
+}
+
+.heatmap-col-label {
+  padding: 0 4px 4px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--ink-faint);
+  text-align: center;
+}
+
+.heatmap-cell {
+  display: grid;
+  place-items: center;
+  min-height: 42px;
+  padding: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 6px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+  transition: transform 160ms var(--ease-out);
+}
+
+.heatmap-cell:hover {
+  transform: scale(1.03);
+}
+
+.heatmap-legend {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  font-size: 9px;
+  color: var(--ink-faint);
+}
+
+.heatmap-scale {
+  width: 90px;
+  height: 5px;
+  border-radius: 99px;
+  background: linear-gradient(90deg, #e9f2ea, #8fae98, #14532d);
+}
+
+.heatmap-empty {
+  display: grid;
+  place-items: center;
+  height: 100%;
+  font-size: 11px;
+  color: var(--ink-muted);
+}
+
+/* --------------------------------------------------------------------------
+   Responsive
+   -------------------------------------------------------------------------- */
+@media (max-width: 1080px) {
+  .kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .chart-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 760px) {
+  .filter-bar.dashboard-filters {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: end;
+    gap: 8px;
+  }
+
+  .dashboard-filters .filter-field,
+  .dashboard-filters .filter-select {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .dashboard-filters .filter-field:nth-child(5),
+  .dashboard-filters .btn {
+    grid-column: 1 / -1;
+  }
+
+  .kpi-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .kpi-value {
+    font-size: 34px;
+  }
+
+  .case-context-note {
+    margin-left: 0;
+  }
+
+  .chart-head {
+    flex-direction: column;
+  }
+
+  .chart-toolbar {
+    width: 100%;
+  }
+
+  .chart-control,
+  .chart-control .filter-select {
+    flex: 1;
+    width: 100%;
+  }
+
+  .chart-surface {
+    height: 270px;
+    min-height: 270px;
+  }
+}

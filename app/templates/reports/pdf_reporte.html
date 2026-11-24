@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Consolidado mensual · {{ resumen.etiqueta }}</title>
+  <style>
+    @page {
+      size: A4;
+      margin: 16mm 13mm 18mm;
+      @bottom-left { content: "UTSM · Control de Asistencia"; font-size: 7pt; color: #607267; }
+      @bottom-right { content: "Página " counter(page) " de " counter(pages); font-size: 7pt; color: #607267; }
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "DejaVu Sans", Arial, sans-serif;
+      color: #1b261f;
+      background: #ffffff;
+      font-size: 8.5pt;
+      line-height: 1.45;
+    }
+    .top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 20px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #14532d;
+    }
+    .brand { display: flex; align-items: center; gap: 10px; }
+    .mark {
+      display: grid;
+      place-items: center;
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      border: 1px solid #b9c9b7;
+      background: #e9f2ea;
+      color: #14532d;
+      font-weight: 700;
+      font-size: 10pt;
+    }
+    .brand strong { display: block; font-size: 11pt; color: #14532d; letter-spacing: 0.02em; }
+    .brand span { display: block; font-size: 7.5pt; color: #52645a; }
+    .doc-meta { text-align: right; font-size: 7.5pt; color: #52645a; }
+    .doc-meta strong { color: #1b261f; }
+    h1 {
+      margin: 14px 0 2px;
+      font-family: "DejaVu Serif", Georgia, serif;
+      font-size: 19pt;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      color: #0b2e21;
+    }
+    .subtitle { margin: 0; font-size: 8.5pt; color: #52645a; }
+    .state {
+      display: inline-block;
+      margin-top: 5px;
+      padding: 2px 7px;
+      border: 1px solid #cfe3d4;
+      border-radius: 10px;
+      background: #e9f2ea;
+      color: #14532d;
+      font-size: 7.5pt;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .metrics {
+      display: table;
+      width: 100%;
+      margin: 12px 0 14px;
+      border-collapse: collapse;
+    }
+    .metric {
+      display: table-cell;
+      width: 25%;
+      padding: 8px 10px;
+      border: 1px solid #e0e8e1;
+      background: #f7faf7;
+    }
+    .metric span { display: block; font-size: 7pt; color: #607267; text-transform: uppercase; letter-spacing: 0.06em; }
+    .metric strong { display: block; margin-top: 2px; font-size: 13pt; color: #1b261f; font-weight: 700; }
+    .metric small { display: block; margin-top: 1px; font-size: 7pt; color: #52645a; }
+    h2 {
+      margin: 14px 0 5px;
+      font-size: 10pt;
+      color: #14532d;
+      border-bottom: 1px solid #d7e5da;
+      padding-bottom: 3px;
+    }
+    table { width: 100%; border-collapse: collapse; }
+    th {
+      padding: 4px 5px;
+      border-bottom: 1px solid #b9c9b7;
+      background: #e9f2ea;
+      color: #14532d;
+      font-size: 6.8pt;
+      text-align: left;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    td { padding: 3.5px 5px; border-bottom: 0.5px solid #e0e8e1; vertical-align: top; }
+    tr:nth-child(even) td { background: #f7faf7; }
+    .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .mono { font-family: "DejaVu Sans Mono", monospace; font-size: 7.2pt; }
+    .muted { color: #52645a; }
+    .exceptions { margin-top: 4px; }
+    .exceptions td { font-size: 7.5pt; }
+    .empty { padding: 8px; color: #52645a; border: 1px dashed #cfccbd; font-size: 8pt; }
+    .note { margin-top: 12px; padding-top: 7px; border-top: 1px solid #e0e8d1; font-size: 7pt; color: #607267; }
+    .avoid { page-break-inside: avoid; }
+  </style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">
+      <span class="mark">UTSM</span>
+      <div>
+        <strong>Control de Asistencia</strong>
+        <span>Proceso AP-GTH-01 · Gestión del talento humano</span>
+      </div>
+    </div>
+    <div class="doc-meta">
+      <strong>Consolidado mensual</strong><br>
+      Generado: {{ generado.strftime('%d/%m/%Y · %H:%M') }}<br>
+      Datos ficticios
+    </div>
+  </div>
+
+  <h1>Consolidado de {{ resumen.etiqueta }}</h1>
+  <p class="subtitle">Horas, incidencias y excepciones del personal docente y administrativo.</p>
+  <span class="state">{{ (periodo.estado if periodo else 'abierto')|capitalize }}</span>
+
+  <div class="metrics">
+    <div class="metric"><span>Trabajadores</span><strong>{{ resumen.total_trabajadores }}</strong><small>{{ resumen.trabajadores_con_marcas }} con marcas</small></div>
+    <div class="metric"><span>Horas trabajadas</span><strong>{{ resumen.total_horas|miles(2) }}</strong><small>Periodo mensual</small></div>
+    <div class="metric"><span>Incidencias</span><strong>{{ resumen.total_incidencias|miles }}</strong><small>Marcaciones observadas</small></div>
+    <div class="metric"><span>Excepciones</span><strong>{{ resumen.total_excepciones }}</strong><small>Pendientes de corrección</small></div>
+  </div>
+
+  <h2>Resumen por trabajador</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Trabajador</th>
+        <th>Área</th>
+        <th>Cargo</th>
+        <th class="num">Horas</th>
+        <th class="num">Marcas</th>
+        <th class="num">Incid.</th>
+        <th class="num">Excep.</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for fila in resumen.filas %}
+        <tr>
+          <td>{{ fila.trabajador.nombre_corto }} <span class="mono muted">{{ fila.trabajador.dni }}</span></td>
+          <td>{{ fila.trabajador.area.nombre }}</td>
+          <td>{{ fila.trabajador.cargo }}</td>
+          <td class="num">{{ '%.2f'|format(fila.horas) }}</td>
+          <td class="num">{{ fila.marcas }}</td>
+          <td class="num">{{ fila.incidencias }}</td>
+          <td class="num">{{ fila.pendientes }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <h2>Excepciones pendientes</h2>
+  {% if resumen.excepciones %}
+    <table class="exceptions">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Fecha</th>
+          <th>Trabajador</th>
+          <th>Tipo</th>
+          <th>Estado</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for incidencia in resumen.excepciones %}
+          <tr>
+            <td class="mono">#{{ incidencia.id_incidencia }}</td>
+            <td class="mono">{{ incidencia.marca.fecha_hora.strftime('%d/%m/%Y') }}</td>
+            <td>{{ incidencia.trabajador.nombre_corto }} <span class="muted">{{ incidencia.trabajador.area.nombre }}</span></td>
+            <td>{{ tipo_incidencia_label(incidencia.tipo) }}</td>
+            <td>{{ estado_incidencia(incidencia).label }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p class="empty">No hay excepciones pendientes en este periodo.</p>
+  {% endif %}
+
+  <p class="note">
+    Documento generado por el prototipo Shaula_efc. Las horas se calculan con las parejas de
+    ingreso y salida registradas. Las metas y datos son ficticios; no sustituyen una planilla real.
+  </p>
+</body>
+</html>

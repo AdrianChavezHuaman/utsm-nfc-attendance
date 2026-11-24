@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% from "_icons.html" import icon %}
+
+{% block title %}Eliminar {{ entidad.singular|lower }}{% endblock %}
+{% block page_title %}Eliminar {{ entidad.singular|lower }}{% endblock %}
+{% block page_subtitle %}Administración{% endblock %}
+{% block styles %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/incidents.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/reports.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+{% endblock %}
+
+{% block content %}
+<header class="page-head">
+  <div class="page-head-copy">
+    <h2>Eliminar {{ entidad.singular|lower }}</h2>
+    <p>La eliminación es definitiva y queda registrada en la auditoría.</p>
+  </div>
+  <div class="report-actions">
+    <a class="btn btn--ghost btn--sm" href="{{ url_for('admin.lista', slug=entidad.slug) }}">Volver al listado</a>
+  </div>
+</header>
+
+{% include "admin/_tabs.html" %}
+
+<section class="panel admin-form-panel">
+  <header class="panel-head">
+    <div>
+      <h3>Registro seleccionado</h3>
+      <p>Revisa los datos antes de confirmar.</p>
+    </div>
+    <span class="badge badge--clay">Acción irreversible</span>
+  </header>
+
+  <dl class="detail-list delete-summary">
+    {% for etiqueta, valor in resumen %}
+      <div class="detail-row"><dt>{{ etiqueta }}</dt><dd>{{ valor }}</dd></div>
+    {% endfor %}
+  </dl>
+
+  {% if motivo %}
+    <div class="flash flash--error" role="alert">
+      {{ icon('alert', 18) }}
+      <span class="flash-text">{{ motivo }}</span>
+    </div>
+    <p class="panel-note">Desactiva el registro en lugar de eliminarlo para conservar la trazabilidad.</p>
+    <div class="admin-form-actions">
+      <a class="btn btn--ghost" href="{{ url_for('admin.lista', slug=entidad.slug) }}">Entendido</a>
+    </div>
+  {% else %}
+    <div class="delete-warning">
+      <strong>Esta acción no se puede deshacer.</strong>
+      <span>El registro se eliminará de la base local y el evento quedará en la auditoría.</span>
+    </div>
+    <form method="post" class="admin-form-actions">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button type="submit" class="btn btn--danger">Eliminar definitivamente</button>
+      <a class="btn btn--ghost" href="{{ url_for('admin.lista', slug=entidad.slug) }}">Cancelar</a>
+    </form>
+  {% endif %}
+</section>
+{% endblock %}

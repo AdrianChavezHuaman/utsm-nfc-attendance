@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+{% from "_icons.html" import icon %}
+{% from "_pagination.html" import pager %}
+
+{% block title %}Auditoría{% endblock %}
+{% block page_title %}Auditoría{% endblock %}
+{% block page_subtitle %}Trazabilidad legible{% endblock %}
+{% block styles %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/incidents.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/reports.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/audit.css') }}">
+{% endblock %}
+
+{% block content %}
+<header class="page-head">
+  <div class="page-head-copy">
+    <h2>Registro de auditoría</h2>
+    <p>Consulta quién hizo qué, cuándo y desde qué IP. El registro se conserva de forma independiente.</p>
+    <div class="page-tags">
+      <span class="badge badge--muted">{{ paginacion.total }} eventos</span>
+      <span class="badge badge--muted">Solo lectura</span>
+    </div>
+  </div>
+  <div class="report-actions">
+    <a class="btn btn--ghost btn--sm" href="{{ url_for('audit.exportar') }}{% if request.query_string %}?{{ request.query_string.decode() }}{% endif %}">Exportar CSV</a>
+  </div>
+</header>
+
+<form method="get" action="{{ url_for('audit.index') }}" class="filter-bar audit-filters">
+  <label class="filter-field">
+    <span>Usuario</span>
+    <select name="usuario" class="filter-select">
+      <option value="">Todos</option>
+      {% for usuario in opciones.usuarios %}
+        <option value="{{ usuario.id_usuario }}" {{ 'selected' if filtros.usuario == usuario.id_usuario }}>{{ usuario.correo }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <label class="filter-field">
+    <span>Tabla</span>
+    <select name="tabla" class="filter-select">
+      <option value="">Todas</option>
+      {% for tabla in opciones.tablas %}
+        <option value="{{ tabla }}" {{ 'selected' if filtros.tabla == tabla }}>{{ etiqueta_tabla(tabla) }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <label class="filter-field">
+    <span>Acción</span>
+    <select name="accion" class="filter-select">
+      <option value="">Todas</option>
+      {% for accion in opciones.acciones %}
+        <option value="{{ accion }}" {{ 'selected' if filtros.accion == accion }}>{{ accion_label(accion) }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <label class="filter-field">
+    <span>Desde</span>
+    <input class="filter-select" type="date" name="desde" value="{{ filtros.desde_texto }}">
+  </label>
+  <label class="filter-field">
+    <span>Hasta</span>
+    <input class="filter-select" type="date" name="hasta" value="{{ filtros.hasta_texto }}">
+  </label>
+  <button type="submit" class="btn btn--primary btn--sm">Filtrar</button>
+  <a class="btn btn--ghost btn--sm" href="{{ url_for('audit.index') }}">Limpiar</a>
+</form>
+
+<section class="panel" aria-labelledby="eventos-title">
+  <header class="panel-head">
+    <div>
+      <h3 id="eventos-title">Eventos registrados</h3>
+      <p>Página {{ paginacion.page }} de {{ paginacion.pages or 1 }}.</p>
+    </div>
+    <span class="badge badge--muted">25 por página</span>
+  </header>
+
+  {% if eventos %}
+    <div class="table-wrap">
+      <table class="report-table audit-table">
+        <thead>
+          <tr>
+            <th>Fecha</th>
+            <th>Usuario</th>
+            <th>Acción</th>
+            <th>Tabla</th>
+            <th>Registro</th>
+            <th>IP</th>
+            <th>Detalle</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for evento in eventos %}
+            <tr>
+              <td class="mono">{{ evento.fecha.strftime('%d/%m/%Y · %H:%M:%S') }}</td>
+              <td>{{ evento.usuario.correo if evento.usuario else 'sistema/kiosco' }}</td>
+              <td><span class="audit-action">{{ accion_label(evento.accion) }}</span></td>
+              <td>{{ etiqueta_tabla(evento.tabla_afectada) }}</td>
+              <td class="mono">{{ evento.registro_id or '—' }}</td>
+              <td class="mono">{{ evento.ip or '—' }}</td>
+              <td>
+                <a class="audit-detail-link" href="{{ url_for('audit.detalle', evento_id=evento.id_evento) }}">Ver detalle</a>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    {% set desde = (paginacion.page - 1) * paginacion.per_page + 1 %}
+    {% set hasta = desde + paginacion.items|length - 1 if paginacion.items else 0 %}
+    {{ pager(paginacion.page, paginacion.pages, paginacion.total, desde, hasta, 'audit.index', query_args, 'eventos') }}
+  {% else %}
+    <div class="empty-state">
+      <p>No hay eventos con los filtros seleccionados.</p>
+    </div>
+  {% endif %}
+</section>
+{% endblock %}

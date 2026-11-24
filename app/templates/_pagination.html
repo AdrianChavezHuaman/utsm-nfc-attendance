@@ -1,0 +1,44 @@
+{#- Paginación numerada reutilizable. -#}
+{% macro pager(pagina, paginas, total, desde, hasta, endpoint, argumentos, etiqueta='registros') -%}
+<nav class="pager" aria-label="Paginación">
+  <span class="pager-summary">
+    Mostrando <strong>{{ desde }}–{{ hasta }}</strong> de <strong>{{ total }}</strong> {{ etiqueta }}
+  </span>
+  {% if paginas > 1 %}
+    <div class="pager-pages">
+      {% if pagina > 1 %}
+        <a class="pager-step" href="{{ url_for(endpoint, pagina=pagina - 1, **argumentos) }}" aria-label="Página anterior">←</a>
+      {% else %}
+        <span class="pager-step is-disabled" aria-hidden="true">←</span>
+      {% endif %}
+
+      {% set inicio = [1, pagina - 2]|max %}
+      {% set fin = [paginas, pagina + 2]|min %}
+
+      {% if inicio > 1 %}
+        <a class="pager-page" href="{{ url_for(endpoint, pagina=1, **argumentos) }}">1</a>
+        {% if inicio > 2 %}<span class="pager-gap">…</span>{% endif %}
+      {% endif %}
+
+      {% for numero in range(inicio, fin + 1) %}
+        {% if numero == pagina %}
+          <span class="pager-page is-current" aria-current="page">{{ numero }}</span>
+        {% else %}
+          <a class="pager-page" href="{{ url_for(endpoint, pagina=numero, **argumentos) }}">{{ numero }}</a>
+        {% endif %}
+      {% endfor %}
+
+      {% if fin < paginas %}
+        {% if fin < paginas - 1 %}<span class="pager-gap">…</span>{% endif %}
+        <a class="pager-page" href="{{ url_for(endpoint, pagina=paginas, **argumentos) }}">{{ paginas }}</a>
+      {% endif %}
+
+      {% if pagina < paginas %}
+        <a class="pager-step" href="{{ url_for(endpoint, pagina=pagina + 1, **argumentos) }}" aria-label="Página siguiente">→</a>
+      {% else %}
+        <span class="pager-step is-disabled" aria-hidden="true">→</span>
+      {% endif %}
+    </div>
+  {% endif %}
+</nav>
+{%- endmacro %}

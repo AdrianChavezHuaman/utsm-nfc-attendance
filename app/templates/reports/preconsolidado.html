@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+{% from "_icons.html" import icon %}
+
+{% block title %}Preconsolidado mensual{% endblock %}
+{% block page_title %}Preconsolidado mensual{% endblock %}
+{% block page_subtitle %}Consolidado y cierre{% endblock %}
+{% block styles %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/incidents.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/reports.css') }}">
+{% endblock %}
+
+{% block content %}
+{% set estado = estado_periodo(periodo.estado) %}
+<header class="page-head">
+  <div class="page-head-copy">
+    <h2>Preconsolidado mensual</h2>
+    <p>Horas, incidencias y excepciones del periodo. El jefe autoriza el cierre; después el periodo queda bloqueado.</p>
+    <div class="page-tags">
+      <span class="badge badge--{{ estado.badge }}">{{ estado.label }}</span>
+      <span class="badge badge--muted">{{ resumen.etiqueta }}</span>
+      {% if periodo.es_simulacion %}
+        <span class="badge badge--brass">Escenario TO-BE simulado</span>
+      {% endif %}
+      {% if periodo.fecha_cierre %}
+        <span class="badge badge--muted">Cerrado {{ periodo.fecha_cierre.strftime('%d/%m/%Y') }}</span>
+      {% endif %}
+    </div>
+  </div>
+  <div class="report-actions">
+    <a class="btn btn--ghost btn--sm" href="{{ url_for('reports.anual', anio=anio) }}">Consolidado anual</a>
+    {% if current_user.rol in ('analista', 'jefe') %}
+      <a class="btn btn--ghost btn--sm" href="{{ url_for('reports.exportar', anio=anio, mes=mes, formato='csv') }}">CSV</a>
+      <a class="btn btn--ghost btn--sm" href="{{ url_for('reports.exportar', anio=anio, mes=mes, formato='excel') }}">Excel</a>
+      <a class="btn btn--ghost btn--sm" href="{{ url_for('reports.exportar', anio=anio, mes=mes, formato='pdf') }}">PDF</a>
+    {% endif %}
+    {% if current_user.rol == 'jefe' %}
+      <a class="btn btn--primary btn--sm" href="{{ url_for('reports.cierre', anio=anio, mes=mes) }}">Ir al cierre</a>
+    {% endif %}
+  </div>
+</header>
+
+{% set action_url = url_for('reports.preconsolidado') %}
+{% include "reports/_selector.html" %}
+
+{% if periodo.estado != 'abierto' %}
+  <div class="period-banner period-banner--closed">
+    {{ icon('shield', 17) }}
+    <span>Este periodo está {{ estado.label|lower }}. Las correcciones están deshabilitadas.</span>
+    <a class="back-link" href="{{ url_for('reports.periodos') }}">Ver periodos</a>
+  </div>
+{% endif %}
+
+<dl class="incident-summary report-summary" aria-label="Resumen del periodo">
+  <div class="incident-summary-cell">
+    <dt>Trabajadores</dt>
+    <dd>{{ resumen.total_trabajadores }}</dd>
+    <span>{{ resumen.trabajadores_con_marcas }} con marcas</span>
+  </div>
+  <div class="incident-summary-cell">
+    <dt>Horas trabajadas</dt>
+    <dd>{{ resumen.total_horas|miles(2) }}</dd>
+    <span>Horas del periodo</span>
+  </div>
+  <div class="incident-summary-cell">
+    <dt>Incidencias</dt>
+    <dd>{{ resumen.total_incidencias|miles }}</dd>
+    <span>Marcaciones observadas</span>
+  </div>
+  <div class="incident-summary-cell">
+    <dt>Excepciones</dt>
+    <dd>{{ resumen.total_excepciones }}</dd>
+    <span>Sin resolver</span>
+  </div>
+</dl>
+
+<section class="panel" aria-labelledby="horas-title">
+  <header class="panel-head">
+    <div>
+      <h3 id="horas-title">Horas por trabajador</h3>
+      <p>El cálculo usa las parejas de ingreso y salida del periodo.</p>
+    </div>
+    <span class="badge badge--muted">{{ resumen.total_trabajadores }} trabajadores</span>
+  </header>
+
+  <div class="table-wrap">
+    <table class="report-table">
+      <thead>
+        <tr>
+          <th>Trabajador</th>
+          <th>Área</th>
+          <th>Cargo</th>
+          <th class="is-number">Horas</th>
+          <th class="is-number">Marcas</th>
+          <th class="is-number">Incidencias</th>
+          <th class="is-number">Excepciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for fila in resumen.filas %}
+          <tr>
+            <td>
+              <span class="report-worker">{{ fila.trabajador.nombre_corto }}</span>
+              <small class="mono">{{ fila.trabajador.dni }}</small>
+            </td>
+            <td>{{ fila.trabajador.area.nombre }}</td>
+            <td>{{ fila.trabajador.cargo }}</td>
+            <td class="is-number mono">{{ '%.2f'|format(fila.horas) }}</td>
+            <td class="is-number mono">{{ fila.marcas }}</td>
+            <td class="is-number mono">{{ fila.incidencias }}</td>
+            <td class="is-number mono">{{ fila.pendientes }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="panel" aria-labelledby="excepciones-title">
+  <header class="panel-head">
+    <div>
+      <h3 id="excepciones-title">Excepciones del periodo</h3>
+      <p>Incidencias pendientes o rechazadas que requieren decisión del analista.</p>
+    </div>
+    <span class="badge badge--{{ 'brass' if resumen.total_excepciones else 'jade' }}">{{ resumen.total_excepciones }} pendientes</span>
+  </header>
+
+  {% if resumen.excepciones %}
+    <div class="exception-list">
+      {% for incidencia in resumen.excepciones %}
+        {% set estado_inc = estado_incidencia(incidencia) %}
+        <article class="exception-row">
+          <div class="exception-main">
+            <div class="incident-line">
+              <span class="incident-kind">{{ incidencia.trabajador.nombre_corto }}</span>
+              <span class="badge badge--{{ estado_inc.badge }}">{{ estado_inc.label }}</span>
+            </div>
+            <span class="incident-meta">{{ tipo_incidencia_label(incidencia.tipo) }} · {{ incidencia.marca.sede.nombre }}</span>
+            <span class="incident-sub mono">{{ incidencia.marca.fecha_hora.strftime('%d/%m/%Y · %H:%M') }}</span>
+          </div>
+          {% if puede_corregir %}
+            <form class="exception-form" method="post"
+                  action="{{ url_for('reports.corregir', anio=anio, mes=mes, incidencia_id=incidencia.id_incidencia) }}">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <input class="filter-select exception-note" type="text" name="nota"
+                     placeholder="Nota de corrección" required minlength="5" maxlength="200">
+              <button type="submit" class="btn btn--ghost btn--sm">Corregir</button>
+            </form>
+          {% else %}
+            <span class="badge badge--muted">Solo lectura</span>
+          {% endif %}
+        </article>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <p>No hay excepciones pendientes en este periodo.</p>
+      <p class="muted">Las incidencias justificadas o cerradas no requieren corrección.</p>
+    </div>
+  {% endif %}
+</section>
+{% endblock %}

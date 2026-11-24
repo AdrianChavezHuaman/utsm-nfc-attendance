@@ -1,0 +1,218 @@
+{% extends "base.html" %}
+{% from "_icons.html" import icon %}
+
+{% block title %}{{ 'Mi asistencia' if es_propio else datos.trabajador.nombres }}{% endblock %}
+{% block page_title %}{{ 'Mi asistencia' if es_propio else 'Ficha del trabajador' }}{% endblock %}
+{% block page_subtitle %}Asistencia individual{% endblock %}
+{% block styles %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/incidents.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/reports.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/attendance.css') }}">
+{% endblock %}
+
+{% block content %}
+<header class="page-head">
+  <div class="page-head-copy">
+    <h2>{{ datos.trabajador.nombres }}</h2>
+    <p>
+      {{ datos.trabajador.cargo }} · {{ datos.trabajador.area.nombre }} ·
+      {{ datos.tipo_label }}
+    </p>
+    <div class="page-tags">
+      <span class="badge badge--muted">{{ datos.trabajador.dni }}</span>
+      <span class="badge badge--{{ 'jade' if datos.trabajador.activo else 'clay' }}">
+        {{ 'Activo' if datos.trabajador.activo else 'Inactivo' }}
+      </span>
+      <span class="badge badge--muted">Tarjeta {{ datos.trabajador.tarjeta.uid if datos.trabajador.tarjeta else 'sin asignar' }}</span>
+      {% if es_propio %}
+        <span class="badge badge--sage">Tu ficha</span>
+      {% endif %}
+    </div>
+  </div>
+  <div class="report-actions">
+    {% if not es_propio %}
+      <a class="btn btn--ghost btn--sm" href="{{ url_for('attendance.personal') }}">Volver a personal</a>
+      <a class="btn btn--ghost btn--sm" href="{{ url_for('attendance.asistencia') }}">Ver asistencia diaria</a>
+      {% if puede_corregir %}
+        <a class="btn btn--ghost btn--sm"
+           href="{{ url_for('attendance.marcas', trabajador_id=datos.trabajador.id_trabajador, anio=datos.mes.anio, mes=datos.mes.mes) }}">
+          Marcaciones del mes
+        </a>
+      {% endif %}
+    {% endif %}
+  </div>
+</header>
+
+<div class="personal-layout">
+  <section class="panel personal-main" aria-labelledby="mes-title">
+    <header class="panel-head personal-month-head">
+      <div>
+        <h3 id="mes-title">Asistencia de {{ datos.mes.mes_label }}</h3>
+        <p>{{ datos.mes.dias_con_marcas }} días con marcaciones · {{ datos.mes.total_horas }} horas</p>
+      </div>
+      <div class="personal-month-tools">
+        <a class="icon-btn" href="{{ url_for('attendance.personal_detalle', trabajador_id=datos.trabajador.id_trabajador, anio=datos.anterior[0], mes=datos.anterior[1], vista=vista) }}"
+           aria-label="Mes anterior">←</a>
+        <span class="mono">{{ datos.mes.mes_label }}</span>
+        <a class="icon-btn" href="{{ url_for('attendance.personal_detalle', trabajador_id=datos.trabajador.id_trabajador, anio=datos.siguiente[0], mes=datos.siguiente[1], vista=vista) }}"
+           aria-label="Mes siguiente">→</a>
+      </div>
+    </header>
+
+    <div class="view-switch" role="group" aria-label="Vista de asistencia">
+      <a class="view-switch-option {{ 'is-active' if vista == 'calendario' }}"
+         href="{{ url_for('attendance.personal_detalle', trabajador_id=datos.trabajador.id_trabajador, anio=datos.mes.anio, mes=datos.mes.mes, vista='calendario') }}">Calendario</a>
+      <a class="view-switch-option {{ 'is-active' if vista == 'lista' }}"
+         href="{{ url_for('attendance.personal_detalle', trabajador_id=datos.trabajador.id_trabajador, anio=datos.mes.anio, mes=datos.mes.mes, vista='lista') }}">Lista</a>
+    </div>
+
+    {% if vista == 'calendario' %}
+      <div class="calendar-scroll">
+        <div class="attendance-calendar" role="grid" aria-label="Calendario de {{ datos.mes.mes_label }}">
+          {% for nombre in ('Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom') %}
+            <div class="calendar-weekday" role="columnheader">{{ nombre }}</div>
+          {% endfor %}
+          {% for semana in datos.mes.semanas %}
+            {% for dia in semana %}
+              {% if dia %}
+                <div class="calendar-day {{ 'is-today' if dia.es_hoy }} {{ 'is-weekend' if dia.dia_semana >= 5 }} status-{{ dia.estado.badge }}"
+                     role="gridcell" title="{{ dia.estado.label }}">
+                  <div class="calendar-day-head">
+                    <span class="calendar-day-number mono">{{ dia.numero }}</span>
+                    <span class="calendar-status-dot"></span>
+                  </div>
+                  {% if dia.horario.texto != 'Sin horario' %}
+                    <span class="calendar-schedule mono">{{ dia.horario.texto }}</span>
+                  {% endif %}
+                  <div class="calendar-marks">
+                    {% if dia.entrada != '—' %}<span>E {{ dia.entrada }}</span>{% endif %}
+                    {% if dia.salida != '—' %}<span>S {{ dia.salida }}</span>{% endif %}
+                  </div>
+                  <div class="calendar-day-foot">
+                    <span>{{ dia.estado.label }}</span>
+                    {% if dia.horas %}<span class="mono">{{ '%.1f'|format(dia.horas) }} h</span>{% endif %}
+                  </div>
+                  {% if dia.incidencias %}
+                    <span class="calendar-incident">{{ dia.incidencias|length }} inc.</span>
+                  {% endif %}
+                </div>
+              {% else %}
+                <div class="calendar-day is-empty" role="gridcell" aria-hidden="true"></div>
+              {% endif %}
+            {% endfor %}
+          {% endfor %}
+        </div>
+      </div>
+      <div class="calendar-legend">
+        <span><i class="legend-dot status-jade"></i> Presente</span>
+        <span><i class="legend-dot status-brass"></i> Tardanza o pendiente</span>
+        <span><i class="legend-dot status-clay"></i> Falta</span>
+        <span><i class="legend-dot status-muted"></i> Descanso o sin horario</span>
+      </div>
+    {% else %}
+      <div class="table-wrap">
+        <table class="report-table personal-list-table">
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Día</th>
+              <th>Horario</th>
+              <th>Entrada</th>
+              <th>Salida</th>
+              <th>Horas</th>
+              <th>Estado</th>
+              <th>Incidencias</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for dia in datos.mes.dias %}
+              <tr>
+                <td class="mono">{{ dia.fecha.strftime('%d/%m/%Y') }}</td>
+                <td>{{ datos.semana[dia.dia_semana].nombre }}</td>
+                <td class="mono">{{ dia.horario.texto }}</td>
+                <td class="mono">{{ dia.entrada }}</td>
+                <td class="mono">{{ dia.salida }}</td>
+                <td class="mono">{{ '%.2f'|format(dia.horas) if dia.horas else '—' }}</td>
+                <td><span class="badge badge--{{ dia.estado.badge }}">{{ dia.estado.label }}</span></td>
+                <td>
+                  {% if dia.incidencias %}
+                    <span class="attendance-incident-count">{{ dia.incidencias|length }}</span>
+                  {% else %}
+                    <span class="muted">—</span>
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% endif %}
+  </section>
+
+  <aside class="personal-rail">
+    <section class="panel" aria-labelledby="weekly-title">
+      <header class="panel-head">
+        <div>
+          <h3 id="weekly-title">Horario semanal</h3>
+          <p>Turno vigente del trabajador.</p>
+        </div>
+      </header>
+      <div class="weekly-schedule">
+        {% for dia in datos.semana %}
+          <div class="weekly-row {{ 'is-off' if not dia.laborable }}">
+            <span>{{ dia.nombre }}</span>
+            {% if dia.laborable %}
+              <strong class="mono">{{ dia.horario.texto }}</strong>
+              <small>{{ dia.horario.turno }}</small>
+            {% else %}
+              <span class="muted">Descanso</span>
+            {% endif %}
+          </div>
+        {% endfor %}
+      </div>
+    </section>
+
+    <section class="panel" aria-labelledby="resumen-title">
+      <header class="panel-head">
+        <div>
+          <h3 id="resumen-title">Resumen del mes</h3>
+          <p>{{ datos.mes.mes_label }}</p>
+        </div>
+      </header>
+      <dl class="detail-list">
+        <div class="detail-row"><dt>Horas registradas</dt><dd class="mono">{{ datos.mes.total_horas }}</dd></div>
+        <div class="detail-row"><dt>Días con marcas</dt><dd class="mono">{{ datos.mes.dias_con_marcas }}</dd></div>
+        <div class="detail-row"><dt>Tardanzas</dt><dd class="mono">{{ datos.mes.tardanzas }}</dd></div>
+        <div class="detail-row"><dt>Faltas</dt><dd class="mono">{{ datos.mes.faltas }}</dd></div>
+        <div class="detail-row"><dt>Incidencias</dt><dd class="mono">{{ datos.mes.total_incidentes }}</dd></div>
+      </dl>
+    </section>
+
+    <section class="panel" aria-labelledby="incidentes-title">
+      <header class="panel-head">
+        <div>
+          <h3 id="incidentes-title">Incidencias recientes</h3>
+          <p>Últimos eventos del mes.</p>
+        </div>
+        {% if current_user.rol in ('trabajador', 'coordinador', 'analista', 'jefe', 'admin') %}
+          <a class="btn btn--ghost btn--sm" href="{{ url_for('incidents.index') }}">Ver todas</a>
+        {% endif %}
+      </header>
+      {% if datos.mes.incidentes %}
+        <ul class="mini-incident-list">
+          {% for incidencia in datos.mes.incidentes %}
+            <li>
+              <a href="{{ url_for('incidents.detalle', incidencia_id=incidencia.id) }}">
+                <span>{{ incidencia.tipo }}</span>
+                <small class="mono">{{ incidencia.fecha.strftime('%d/%m/%Y') }}</small>
+              </a>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="empty-state">Sin incidencias en el mes.</p>
+      {% endif %}
+    </section>
+  </aside>
+</div>
+{% endblock %}

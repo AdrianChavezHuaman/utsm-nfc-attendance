@@ -1,0 +1,35 @@
+# Entorno virtual
+.venv/
+venv/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+
+# Base de datos y archivos generados
+instance/
+*.db
+*.sqlite
+*.sqlite3
+
+# Secretos y editor
+.env
+.idea/
+.vscode/
+*.swp
+.DS_Store
+
+# Documentos internos y respaldos
+HANDOFF_*.md
+PLAN_V7.md
+FASES_ROADMAP.txt
+PRODUCT.md
+SPEC_PLAN.md
+docs/respaldos/
+
+# Capturas de fases anteriores (se conserva v7)
+docs/capturas/fase*/
+docs/capturas/bloque*/

@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% from "_icons.html" import icon %}
+
+{% block title %}Periodos{% endblock %}
+{% block page_title %}Periodos{% endblock %}
+{% block page_subtitle %}Consolidación mensual{% endblock %}
+{% block styles %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/incidents.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/reports.css') }}">
+{% endblock %}
+
+{% block content %}
+<header class="page-head">
+  <div class="page-head-copy">
+    <h2>Periodos consolidados</h2>
+    <p>Historial de periodos, estados de cierre y archivos generados.</p>
+    <div class="page-tags">
+      <span class="badge badge--muted">Datos ficticios</span>
+    </div>
+  </div>
+  <div class="report-actions">
+    <a class="btn btn--ghost btn--sm" href="{{ url_for('reports.anual') }}">Consolidado anual</a>
+    <a class="btn btn--ghost btn--sm" href="{{ url_for('reports.preconsolidado') }}">Abrir preconsolidado</a>
+  </div>
+</header>
+
+<section class="panel" aria-labelledby="periodos-title">
+  <header class="panel-head">
+    <div>
+      <h3 id="periodos-title">Historial</h3>
+      <p>Los cierres realizados desde la app guardan una copia CSV, Excel y PDF.</p>
+    </div>
+    <span class="badge badge--muted">{{ periodos|length }} {{ 'periodo' if periodos|length == 1 else 'periodos' }}</span>
+  </header>
+
+  {% if periodos %}
+    <div class="table-wrap">
+      <table class="report-table period-table">
+        <thead>
+          <tr>
+            <th>Periodo</th>
+            <th>Estado</th>
+            <th>Cierre</th>
+            <th class="is-number">Horas</th>
+            <th class="is-number">Incidencias</th>
+            <th class="is-number">Excepciones</th>
+            <th>Archivos</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for periodo in periodos %}
+            {% set estado = estado_periodo(periodo.estado) %}
+            {% set total = totales[periodo.id_periodo] %}
+            <tr>
+              <td><span class="report-worker">{{ periodo.etiqueta }}</span></td>
+              <td>
+                <span class="badge badge--{{ estado.badge }}">{{ estado.label }}</span>
+                {% if periodo.es_simulacion %}
+                  <span class="badge badge--brass">Simulado</span>
+                {% endif %}
+              </td>
+              <td class="mono">
+                {{ periodo.fecha_cierre.strftime('%d/%m/%Y') if periodo.fecha_cierre else '—' }}
+              </td>
+              <td class="is-number mono">{{ '%.2f'|format(total.horas) }}</td>
+              <td class="is-number mono">{{ total.incidencias }}</td>
+              <td class="is-number mono">{{ total.excepciones }}</td>
+              <td>
+                <div class="period-files">
+                  {% for archivo in periodo.consolidados %}
+                    <a class="badge badge--muted" href="{{ url_for('reports.descargar_consolidado', consolidado_id=archivo.id_consolidado) }}">{{ archivo.tipo|upper }}</a>
+                  {% else %}
+                    <span class="muted">{{ 'Histórico' if periodo.estado == 'cerrado' else '—' }}</span>
+                  {% endfor %}
+                </div>
+              </td>
+              <td>
+                <a class="btn btn--ghost btn--sm" href="{{ url_for('reports.preconsolidado', anio=periodo.anio, mes=periodo.mes) }}">Ver</a>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <p>Aún no hay periodos creados.</p>
+      <p class="muted">Abre el preconsolidado para iniciar el primer periodo.</p>
+      <a class="btn btn--primary btn--sm" href="{{ url_for('reports.preconsolidado') }}">Abrir preconsolidado</a>
+    </div>
+  {% endif %}
+</section>
+{% endblock %}

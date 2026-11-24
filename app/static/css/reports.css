@@ -1,0 +1,312 @@
+/* ==========================================================================
+   Shaula_efc · Preconsolidado, cierre y periodos
+   ========================================================================== */
+
+.report-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.report-cta-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.report-selector {
+  margin-bottom: 0;
+}
+
+.report-summary {
+  margin-top: 0;
+}
+
+/* --------------------------------------------------------------------------
+   Tablas de consolidado
+   -------------------------------------------------------------------------- */
+.table-wrap {
+  max-height: 560px;
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--white);
+}
+
+.report-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+}
+
+.report-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding: 7px 9px;
+  border-bottom: 1px solid var(--border-strong);
+  background: var(--surface-2);
+  color: var(--ink-faint);
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.report-table td {
+  padding: 7px 9px;
+  border-top: 1px solid #eef3ee;
+  color: var(--ink-soft);
+  vertical-align: top;
+}
+
+.report-table tbody tr:first-child td {
+  border-top: 0;
+}
+
+.report-table tbody tr:hover td {
+  background: var(--sage-50);
+}
+
+.report-table .is-number {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.report-worker {
+  display: block;
+  font-size: 11.5px;
+  font-weight: 650;
+  color: var(--ink-soft);
+}
+
+.report-table small {
+  display: block;
+  margin-top: 1px;
+  font-size: 8.5px;
+  color: var(--ink-faint);
+}
+
+.period-table td {
+  vertical-align: middle;
+}
+
+.period-files {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.period-files .badge:hover {
+  border-color: #cfdccc;
+  background: var(--sage-50);
+  color: var(--green-700);
+}
+
+/* --------------------------------------------------------------------------
+   Avisos de periodo
+   -------------------------------------------------------------------------- */
+.period-banner {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-2);
+  font-size: 11px;
+  color: var(--ink-soft);
+}
+
+.period-banner svg {
+  flex: none;
+  color: var(--ink-muted);
+}
+
+.period-banner--warning {
+  border-color: var(--brass-line);
+  background: var(--brass-bg);
+  color: var(--brass);
+}
+
+.period-banner--warning svg {
+  color: var(--brass);
+}
+
+.period-banner--closed {
+  border-color: #cfdccc;
+  background: var(--sage-50);
+  color: var(--green-700);
+}
+
+.period-banner--closed svg {
+  color: var(--green-600);
+}
+
+.period-banner .back-link {
+  margin: 0 0 0 auto;
+  white-space: nowrap;
+}
+
+/* --------------------------------------------------------------------------
+   Excepciones
+   -------------------------------------------------------------------------- */
+.exception-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.exception-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 16px;
+  padding: 10px 0;
+  border-top: 1px solid #eef3ee;
+}
+
+.exception-row:first-child {
+  border-top: 0;
+  padding-top: 2px;
+}
+
+.exception-main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 2px;
+}
+
+.exception-form {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.exception-note {
+  min-width: 190px;
+}
+
+/* --------------------------------------------------------------------------
+   Cierre
+   -------------------------------------------------------------------------- */
+.close-panel {
+  padding-bottom: 18px;
+}
+
+.close-form {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+
+.close-form .checkbox {
+  flex: 1;
+  min-width: 260px;
+}
+
+/* --------------------------------------------------------------------------
+   Archivos archivados
+   -------------------------------------------------------------------------- */
+.archive-list {
+  display: flex;
+  flex-direction: column;
+  margin-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.archive-row {
+  display: grid;
+  grid-template-columns: 62px minmax(0, 1fr) 130px auto;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid #eef3ee;
+  font-size: 10px;
+  color: var(--ink-muted);
+}
+
+.archive-row .mono {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.archive-row .btn {
+  justify-self: end;
+}
+
+/* --------------------------------------------------------------------------
+   Responsive
+   -------------------------------------------------------------------------- */
+@media (max-width: 760px) {
+  .report-actions {
+    width: 100%;
+  }
+
+  .exception-row {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+  }
+
+  .exception-form {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .exception-note {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .close-form {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .close-form .checkbox {
+    min-width: 0;
+  }
+
+  .archive-row {
+    grid-template-columns: 62px minmax(0, 1fr);
+  }
+
+  .archive-row .btn {
+    grid-column: 2;
+    justify-self: start;
+  }
+
+  .archive-row .muted {
+    grid-column: 2;
+  }
+
+  .table-wrap {
+    max-height: none;
+  }
+}
+
+
+@media (max-width: 640px) {
+  .report-table .col-optional {
+    display: none;
+  }
+
+  .report-table .col-action {
+    position: sticky;
+    right: 0;
+    background: var(--white);
+    box-shadow: -8px 0 10px -8px rgba(23, 37, 29, 0.22);
+  }
+}

@@ -1,0 +1,22 @@
+{% from "_icons.html" import icon %}
+<form method="get" action="{{ action_url }}" class="filter-bar report-selector">
+  <label class="filter-field">
+    <span>Año</span>
+    <select name="anio" class="filter-select">
+      {% for valor in range(2024, 2028) %}
+        <option value="{{ valor }}" {{ 'selected' if valor == anio }}>{{ valor }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <label class="filter-field">
+    <span>Mes</span>
+    <select name="mes" class="filter-select">
+      {% for numero in range(1, 13) %}
+        <option value="{{ numero }}" {{ 'selected' if numero == mes }}>
+          {{ ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'][numero - 1] }}
+        </option>
+      {% endfor %}
+    </select>
+  </label>
+  <button type="submit" class="btn btn--primary btn--sm">{{ icon('calendar', 15) }} Ver periodo</button>
+</form>

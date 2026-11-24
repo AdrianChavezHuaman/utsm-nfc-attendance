@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% from "_icons.html" import icon %}
+{% from "_pagination.html" import pager %}
+
+{% block title %}{{ entidad.nombre }}{% endblock %}
+{% block page_title %}{{ entidad.nombre }}{% endblock %}
+{% block page_subtitle %}Administración{% endblock %}
+{% block styles %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/incidents.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/reports.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+{% endblock %}
+
+{% block content %}
+<header class="page-head">
+  <div class="page-head-copy">
+    <h2>{{ entidad.nombre }}</h2>
+    <p>{{ entidad.descripcion }}</p>
+    <div class="page-tags">
+      <span class="badge badge--muted">{{ paginacion.total }} {{ 'registro' if paginacion.total == 1 else 'registros' }}</span>
+    </div>
+  </div>
+  <div class="report-actions">
+    <a class="btn btn--primary btn--sm" href="{{ url_for('admin.nuevo', slug=entidad.slug) }}">{{ icon('spark', 15) }} {{ entidad.etiqueta_nueva }}</a>
+  </div>
+</header>
+
+{% include "admin/_tabs.html" %}
+
+<section class="panel" aria-labelledby="lista-title">
+  <header class="panel-head">
+    <div>
+      <h3 id="lista-title">Listado</h3>
+      <p>Busca y edita los registros; los cambios se auditan.</p>
+    </div>
+    {% if entidad.buscar %}
+      <form method="get" class="admin-search">
+        <input class="input" type="search" name="q" value="{{ q }}" placeholder="Buscar en {{ entidad.nombre|lower }}">
+        <button class="btn btn--ghost btn--sm" type="submit">Buscar</button>
+      </form>
+    {% endif %}
+  </header>
+
+  {% if registros %}
+    <div class="table-wrap">
+      <table class="report-table">
+        <thead>
+          <tr>
+            {% for etiqueta, _ in entidad.columnas %}<th>{{ etiqueta }}</th>{% endfor %}
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for registro in registros %}
+            <tr>
+              {% for _, valor in entidad.columnas %}
+                <td>{{ valor(registro) }}</td>
+              {% endfor %}
+              <td class="admin-row-actions">
+                <a class="btn btn--ghost btn--sm"
+                   href="{{ url_for('admin.editar', slug=entidad.slug, objeto_id=registro|attr(entidad.pk)) }}">Editar</a>
+                {% if entidad.slug == 'lectores' %}
+                  <form method="post" action="{{ url_for('admin.sincronizar_lector', lector_id=registro|attr(entidad.pk)) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button class="btn btn--ghost btn--sm" type="submit">Sincronizar</button>
+                  </form>
+                {% endif %}
+                <a class="btn btn--danger btn--sm"
+                   href="{{ url_for('admin.eliminar', slug=entidad.slug, objeto_id=registro|attr(entidad.pk)) }}">Eliminar</a>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    {% set desde = (paginacion.page - 1) * paginacion.per_page + 1 %}
+    {% set hasta = desde + paginacion.items|length - 1 if paginacion.items else 0 %}
+    {{ pager(paginacion.page, paginacion.pages, paginacion.total, desde, hasta, 'admin.lista', {'slug': entidad.slug, 'q': q}, 'registros') }}
+  {% else %}
+    <div class="empty-state">
+      <p>No hay registros {{ 'con esa búsqueda' if q else 'todavía' }}.</p>
+      {% if q %}<a class="btn btn--ghost btn--sm" href="{{ url_for('admin.lista', slug=entidad.slug) }}">Limpiar búsqueda</a>{% endif %}
+    </div>
+  {% endif %}
+</section>
+{% endblock %}

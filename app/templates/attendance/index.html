@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+{% from "_icons.html" import icon %}
+{% from "_pagination.html" import pager %}
+
+{% block title %}Control de asistencia{% endblock %}
+{% block page_title %}Control de asistencia{% endblock %}
+{% block page_subtitle %}Operación diaria{% endblock %}
+{% block styles %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/incidents.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/reports.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/attendance.css') }}">
+{% endblock %}
+
+{% block content %}
+<header class="page-head">
+  <div class="page-head-copy">
+    <h2>Asistencia del personal</h2>
+    <p>Consulta la jornada por persona, detecta tardanzas y faltas, y abre la ficha individual del trabajador.</p>
+    <div class="page-tags">
+      <span class="badge badge--jade">{{ icon('calendar', 13) }} {{ datos.etiqueta_fecha }}</span>
+      <span class="badge badge--muted">{{ datos.total }} trabajadores</span>
+      {% if datos.area_scope %}
+        <span class="badge badge--brass">Solo {{ datos.area_scope.nombre }}</span>
+      {% endif %}
+    </div>
+  </div>
+  <div class="report-actions">
+    <a class="btn btn--ghost btn--sm" href="{{ url_for('kiosk.index') }}">{{ icon('scan', 15) }} Ir al kiosco</a>
+  </div>
+</header>
+
+<form method="get" action="{{ url_for('attendance.asistencia') }}" class="filter-bar attendance-filters">
+  <label class="filter-field">
+    <span>Fecha</span>
+    <input class="filter-select" type="date" name="fecha" value="{{ filtros.fecha.isoformat() }}">
+  </label>
+  <label class="filter-field">
+    <span>Sede</span>
+    <select name="sede" class="filter-select">
+      <option value="">Todas</option>
+      {% for sede in opciones.sedes %}
+        <option value="{{ sede.id_sede }}" {{ 'selected' if filtros.sede == sede.id_sede }}>{{ sede.nombre }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  {% if datos.area_scope %}
+    <div class="filter-field">
+      <span>Área</span>
+      <div class="fixed-filter">{{ datos.area_scope.nombre }}</div>
+    </div>
+  {% else %}
+    <label class="filter-field">
+      <span>Área</span>
+      <select name="area" class="filter-select">
+        <option value="">Todas</option>
+        {% for area in opciones.areas %}
+          <option value="{{ area.id_area }}" {{ 'selected' if filtros.area == area.id_area }}>{{ area.nombre }}</option>
+        {% endfor %}
+      </select>
+    </label>
+  {% endif %}
+  <label class="filter-field">
+    <span>Tipo de personal</span>
+    <select name="tipo" class="filter-select">
+      <option value="">Todos</option>
+      {% for clave, nombre in opciones.tipos %}
+        <option value="{{ clave }}" {{ 'selected' if filtros.tipo == clave }}>{{ nombre }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <label class="filter-field filter-field--wide">
+    <span>Buscar trabajador</span>
+    <input class="filter-select" type="search" name="q" value="{{ filtros.q }}" placeholder="Nombre o DNI">
+  </label>
+  <button type="submit" class="btn btn--primary btn--sm">Aplicar filtros</button>
+  <a class="btn btn--ghost btn--sm" href="{{ url_for('attendance.asistencia') }}">Limpiar</a>
+</form>
+
+<section class="attendance-summary" aria-label="Resumen del día">
+  <div class="attendance-summary-cell">
+    <span>Programados</span>
+    <strong>{{ datos.resumen.programados }}</strong>
+  </div>
+  <div class="attendance-summary-cell">
+    <span>Con presencia</span>
+    <strong class="is-positive">{{ datos.resumen.presentes }}</strong>
+  </div>
+  <div class="attendance-summary-cell">
+    <span>Tardanzas</span>
+    <strong class="is-warning">{{ datos.resumen.tardanzas }}</strong>
+  </div>
+  <div class="attendance-summary-cell">
+    <span>Faltas</span>
+    <strong class="is-danger">{{ datos.resumen.faltas }}</strong>
+  </div>
+  <div class="attendance-summary-cell">
+    <span>Salidas pendientes</span>
+    <strong class="is-warning">{{ datos.resumen.pendientes }}</strong>
+  </div>
+  <div class="attendance-summary-cell">
+    <span>Incidencias</span>
+    <strong>{{ datos.resumen.incidencias }}</strong>
+  </div>
+</section>
+
+<section class="panel" aria-labelledby="asistencia-title">
+  <header class="panel-head">
+    <div>
+      <h3 id="asistencia-title">Jornada del {{ datos.etiqueta_fecha }}</h3>
+      <p>{{ datos.resumen.sin_horario }} trabajadores sin horario para este día.</p>
+    </div>
+    <span class="badge badge--muted">{{ datos.total }} en el filtro</span>
+  </header>
+
+  {% if datos.filas %}
+    <div class="table-wrap">
+      <table class="report-table attendance-table">
+        <thead>
+          <tr>
+            <th>Trabajador</th>
+            <th>Área</th>
+            <th>Horario</th>
+            <th>Entrada</th>
+            <th>Salida</th>
+            <th>Horas</th>
+            <th>Estado</th>
+            <th>Incidencias</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for fila in datos.filas %}
+            <tr>
+              <td>
+                <a class="attendance-person" href="{{ url_for('attendance.personal_detalle', trabajador_id=fila.trabajador.id_trabajador) }}">
+                  <span class="report-worker">{{ fila.nombre_corto }}</span>
+                  <small>{{ fila.trabajador.dni }} · {{ fila.tipo }}</small>
+                </a>
+              </td>
+              <td>{{ fila.area }}</td>
+              <td class="mono">{{ fila.horario }}</td>
+              <td class="mono">{{ fila.entrada }}</td>
+              <td class="mono">{{ fila.salida }}</td>
+              <td class="mono">{{ '%.2f'|format(fila.horas) if fila.horas else '—' }}</td>
+              <td><span class="badge badge--{{ fila.estado.badge }}">{{ fila.estado.label }}</span></td>
+              <td>
+                {% if fila.incidencias %}
+                  <span class="attendance-incident-count" title="{{ fila.incidencias|map(attribute='tipo_label')|join(', ') }}">
+                    {{ fila.total_incidencias }}
+                  </span>
+                {% else %}
+                  <span class="muted">—</span>
+                {% endif %}
+              </td>
+              <td>
+                <a class="btn btn--ghost btn--sm" href="{{ url_for('attendance.personal_detalle', trabajador_id=fila.trabajador.id_trabajador) }}">Ver ficha</a>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {{ pager(datos.pagina, datos.paginas, datos.total, datos.desde, datos.hasta, 'attendance.asistencia', query_args, 'trabajadores') }}
+  {% else %}
+    <div class="empty-state">
+      <p>No hay trabajadores con esos filtros para este día.</p>
+      <a class="btn btn--ghost btn--sm" href="{{ url_for('attendance.asistencia') }}">Limpiar filtros</a>
+    </div>
+  {% endif %}
+</section>
+{% endblock %}

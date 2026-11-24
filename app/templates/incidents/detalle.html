@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+{% from "_icons.html" import icon %}
+
+{% block title %}Incidencia #{{ incidencia.id_incidencia }}{% endblock %}
+{% block page_title %}Incidencia #{{ incidencia.id_incidencia }}{% endblock %}
+{% block page_subtitle %}Justificación y resolución{% endblock %}
+{% block styles %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/incidents.css') }}">
+{% endblock %}
+
+{% block content %}
+{% set estado = estado_incidencia(incidencia) %}
+<header class="detail-head">
+  <div>
+    <a class="back-link" href="{{ volver_url }}">
+      {% if current_user.rol == 'trabajador' %}← Volver a mis incidencias
+      {% elif current_user.rol == 'coordinador' %}← Volver a la bandeja
+      {% else %}← Volver al registro{% endif %}
+    </a>
+    <h2>{{ tipo_incidencia_label(incidencia.tipo) }}</h2>
+    <p class="mono">{{ incidencia.marca.fecha_hora.strftime('%d/%m/%Y · %H:%M') }} · {{ incidencia.marca.sede.nombre }}</p>
+    <div class="page-tags">
+      <span class="badge badge--{{ estado.badge }}">{{ estado.label }}</span>
+      <span class="badge badge--muted">{{ incidencia.trabajador.nombre_corto }}</span>
+    </div>
+  </div>
+</header>
+
+<div class="incident-detail-grid">
+  <section class="panel" aria-labelledby="recorrido-title">
+    <header class="panel-head">
+      <div>
+        <h3 id="recorrido-title">Recorrido de la incidencia</h3>
+        <p>Marcación, detección y resolución.</p>
+      </div>
+    </header>
+
+    <dl class="detail-list">
+      <div class="detail-row"><dt>Trabajador</dt><dd>{{ incidencia.trabajador.nombre_corto }}</dd></div>
+      <div class="detail-row"><dt>Área</dt><dd>{{ incidencia.trabajador.area.nombre }}</dd></div>
+      <div class="detail-row"><dt>Sede</dt><dd>{{ incidencia.marca.sede.nombre }}</dd></div>
+      <div class="detail-row"><dt>Lector</dt><dd>{{ incidencia.marca.lector.nombre }}</dd></div>
+      <div class="detail-row"><dt>Marca</dt><dd>{{ tipo_marca_label(incidencia.marca.tipo) }} · {{ incidencia.marca.fecha_hora.strftime('%H:%M') }}</dd></div>
+      <div class="detail-row"><dt>Detectada</dt><dd class="mono">{{ incidencia.fecha_creacion.strftime('%d/%m/%Y · %H:%M') }}</dd></div>
+    </dl>
+
+    <ol class="timeline">
+      <li class="timeline-item is-done">
+        <span class="timeline-dot"></span>
+        <div>
+          <h4>Marcación registrada</h4>
+          <p>{{ tipo_marca_label(incidencia.marca.tipo) }} · {{ incidencia.marca.fecha_hora.strftime('%d/%m/%Y · %H:%M') }} · {{ incidencia.marca.lector.nombre }}</p>
+        </div>
+      </li>
+      <li class="timeline-item is-done">
+        <span class="timeline-dot"></span>
+        <div>
+          <h4>Incidencia detectada</h4>
+          <p>{{ tipo_incidencia_label(incidencia.tipo) }} · {{ incidencia.fecha_creacion.strftime('%d/%m/%Y · %H:%M') }}</p>
+        </div>
+      </li>
+      <li class="timeline-item {{ 'is-done' if justificacion else 'is-pending' }}">
+        <span class="timeline-dot"></span>
+        <div>
+          <h4>Justificación</h4>
+          {% if justificacion %}
+            <p>{{ estado_justificacion_label(justificacion.estado) }} · {{ justificacion.fecha_envio.strftime('%d/%m/%Y · %H:%M') }}</p>
+          {% else %}
+            <p>Pendiente de sustento digital.</p>
+          {% endif %}
+        </div>
+      </li>
+      <li class="timeline-item {{ 'is-rejected' if justificacion and justificacion.estado == 'rechazada' else ('is-done' if justificacion and justificacion.estado == 'aprobada' else 'is-pending') }}">
+        <span class="timeline-dot"></span>
+        <div>
+          <h4>Resolución</h4>
+          {% if justificacion and justificacion.fecha_resolucion %}
+            <p>{{ estado_justificacion_label(justificacion.estado) }} · {{ justificacion.fecha_resolucion.strftime('%d/%m/%Y · %H:%M') }}</p>
+          {% else %}
+            <p>Esperando decisión del coordinador.</p>
+          {% endif %}
+        </div>
+      </li>
+    </ol>
+  </section>
+
+  <section class="panel justification-panel" aria-labelledby="justificacion-title">
+    <header class="panel-head">
+      <div>
+        <h3 id="justificacion-title">Justificación</h3>
+        <p>{{ incidencia.trabajador.area.nombre }}</p>
+      </div>
+      {% if justificacion %}
+        <span class="badge badge--{{ 'brass' if justificacion.estado == 'enviada' else ('jade' if justificacion.estado == 'aprobada' else 'clay') }}">
+          {{ estado_justificacion_label(justificacion.estado) }}
+        </span>
+      {% endif %}
+    </header>
+
+    {% if justificacion %}
+      <p class="justification-motive">{{ justificacion.motivo }}</p>
+
+      <dl class="detail-list justification-meta">
+        <div class="detail-row"><dt>Enviada</dt><dd class="mono">{{ justificacion.fecha_envio.strftime('%d/%m/%Y · %H:%M') }}</dd></div>
+        {% if justificacion.fecha_resolucion %}
+          <div class="detail-row"><dt>Resuelta</dt><dd class="mono">{{ justificacion.fecha_resolucion.strftime('%d/%m/%Y · %H:%M') }}</dd></div>
+          <div class="detail-row"><dt>Resolvió</dt><dd>{{ justificacion.usuario_resolvio.nombre_corto if justificacion.usuario_resolvio else '—' }}</dd></div>
+        {% endif %}
+        {% if justificacion.comentario_resolucion %}
+          <div class="detail-row"><dt>Comentario</dt><dd>{{ justificacion.comentario_resolucion }}</dd></div>
+        {% endif %}
+      </dl>
+
+      {% if justificacion.archivo %}
+        <a class="file-chip" href="{{ url_for('incidents.sustento', incidencia_id=incidencia.id_incidencia) }}"
+           target="_blank" rel="noopener">
+          {{ icon('file', 16) }}
+          <span>{{ justificacion.nombre_archivo or 'Ver sustento' }}</span>
+          <small>Abrir</small>
+        </a>
+      {% endif %}
+
+      {% if puede_resolver %}
+        <form method="post" action="{{ url_for('incidents.resolver', incidencia_id=incidencia.id_incidencia) }}" class="decision-form">
+          {{ form.hidden_tag() }}
+          <div class="field">
+            <label class="label" for="{{ form.comentario.id }}">Comentario de la decisión</label>
+            {{ form.comentario(class_="input textarea", rows="3", placeholder="Explica la decisión. Es obligatorio al rechazar.") }}
+          </div>
+          <p class="panel-note">Rechazar exige un comentario para que el trabajador pueda corregir.</p>
+          <div class="decision-actions">
+            {{ form.aprobar(class_="btn btn--primary") }}
+            {{ form.rechazar(class_="btn btn--ghost") }}
+          </div>
+        </form>
+      {% elif current_user.rol == 'trabajador' and puede_justificar %}
+        <a class="btn btn--primary btn--block" href="{{ url_for('incidents.justificar', incidencia_id=incidencia.id_incidencia) }}">
+          {{ 'Reenviar justificación' if justificacion.estado == 'rechazada' else 'Editar justificación' }}
+        </a>
+      {% elif current_user.rol == 'trabajador' and justificacion.estado == 'rechazada' and not en_plazo %}
+        <p class="panel-note">El plazo de cinco días hábiles venció; no es posible reenviar.</p>
+      {% elif current_user.rol in ('analista', 'jefe', 'admin') %}
+        <p class="panel-note">La aprobación corresponde al coordinador del área. Esta vista es de consulta.</p>
+      {% endif %}
+    {% else %}
+      <div class="empty-state">
+        <p>Sin justificación registrada.</p>
+        {% if current_user.rol == 'trabajador' and puede_justificar %}
+          <p class="muted">Presenta tu sustento dentro de los cinco días hábiles.</p>
+          <a class="btn btn--primary btn--sm" href="{{ url_for('incidents.justificar', incidencia_id=incidencia.id_incidencia) }}">
+            Registrar justificación
+          </a>
+        {% elif current_user.rol == 'trabajador' %}
+          <p class="muted">El plazo para justificar esta incidencia venció o la incidencia ya fue resuelta.</p>
+        {% elif current_user.rol == 'coordinador' %}
+          <p class="muted">El trabajador aún no presentó sustento.</p>
+        {% else %}
+          <p class="muted">Aún no se registró una justificación.</p>
+        {% endif %}
+      </div>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}

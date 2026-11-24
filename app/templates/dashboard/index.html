@@ -1,0 +1,198 @@
+{% extends "base.html" %}
+{% from "_icons.html" import icon %}
+
+{% block title %}Panel KPI{% endblock %}
+{% block page_title %}Panel KPI{% endblock %}
+{% block page_subtitle %}Línea base y operación{% endblock %}
+{% block styles %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/incidents.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+{% endblock %}
+
+{% block content %}
+{% set tipo_grafico = request.args.get('tipo_grafico', 'line') %}
+{% set metrica = request.args.get('metrica', 'calidad') %}
+{% set tipo_ops = request.args.get('tipo_ops', 'bar') %}
+<header class="page-head">
+  <div class="page-head-copy">
+    <h2>Indicadores del proceso</h2>
+    <p>Analiza la evolución del caso UTSM y la operación simulada del periodo. Los KPI 2024–2026 son línea base; 2027 es proyección TO-BE.</p>
+    <div class="page-tags">
+      <span class="badge badge--jade">{{ icon('chart', 13) }} Indicadores del proceso</span>
+      <span class="badge badge--brass">{{ '2027 · Proyección TO-BE' if filtros.anio == 2027 else 'La serie 2027 es proyección' }}</span>
+      {% if simulacion %}
+        <span class="badge badge--jade">Enero 2027 · TO-BE simulado</span>
+      {% endif %}
+      <span class="badge badge--muted">Datos ficticios</span>
+    </div>
+  </div>
+</header>
+
+<form method="get" action="{{ url_for('dashboard.index') }}" class="filter-bar dashboard-filters">
+  <label class="filter-field">
+    <span>Año</span>
+    <select name="anio" class="filter-select">
+      {% for anio in opciones.anios %}
+        <option value="{{ anio }}" {{ 'selected' if anio == filtros.anio }}>{{ anio }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <label class="filter-field">
+    <span>Mes de operación</span>
+    <select name="mes" class="filter-select">
+      <option value="">Todos</option>
+      {% for numero, nombre in opciones.meses %}
+        <option value="{{ numero }}" {{ 'selected' if filtros.mes == numero }}>{{ nombre }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <label class="filter-field">
+    <span>Sede</span>
+    <select name="sede" class="filter-select">
+      <option value="">Todas</option>
+      {% for sede in opciones.sedes %}
+        <option value="{{ sede.id_sede }}" {{ 'selected' if filtros.sede == sede.id_sede }}>{{ sede.nombre }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <label class="filter-field">
+    <span>Área</span>
+    <select name="area" class="filter-select">
+      <option value="">Todas</option>
+      {% for area in opciones.areas %}
+        <option value="{{ area.id_area }}" {{ 'selected' if filtros.area == area.id_area }}>{{ area.nombre }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <label class="filter-field">
+    <span>Tipo de personal</span>
+    <select name="tipo" class="filter-select">
+      <option value="">Todos</option>
+      {% for clave, nombre in opciones.tipos %}
+        <option value="{{ clave }}" {{ 'selected' if filtros.tipo == clave }}>{{ nombre }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <input type="hidden" name="tipo_grafico" id="tipo-grafico-hidden" value="{{ tipo_grafico }}">
+  <input type="hidden" name="metrica" id="metrica-hidden" value="{{ metrica }}">
+  <input type="hidden" name="tipo_ops" id="tipo-ops-hidden" value="{{ tipo_ops }}">
+  <button type="submit" class="btn btn--primary btn--sm">Aplicar filtros</button>
+</form>
+
+<section class="kpi-grid" aria-label="Indicadores del año {{ filtros.anio }}">
+  {% for kpi in kpis %}
+    <article class="kpi-card">
+      <header class="kpi-head">
+        <span class="kpi-label">{{ kpi.nombre }}</span>
+        <span class="badge badge--{{ kpi.badge }}">{{ kpi.estado }}</span>
+      </header>
+      <div class="kpi-value">{{ kpi.valor_texto }}<small>{{ kpi.unidad }}</small></div>
+      <div class="kpi-meta">
+        <span>Meta {{ kpi.meta_texto }}</span>
+        {% if kpi.variacion is not none %}
+          <span class="mono">{{ '+' if kpi.variacion > 0 }}{{ kpi.variacion }} {{ kpi.unidad }} vs {{ filtros.anio - 1 }}</span>
+        {% endif %}
+      </div>
+      <p class="kpi-description">{{ kpi.descripcion }}</p>
+      {% if kpi.proyeccion %}
+        <span class="badge badge--brass">Proyección TO-BE 2027</span>
+      {% endif %}
+    </article>
+  {% endfor %}
+</section>
+
+<section class="case-context" aria-label="Contexto del caso">
+  <div class="case-context-item">
+    <span>Costo mensual de gestión</span>
+    <strong class="mono">S/ {{ '{:,.2f}'.format(contexto.costo) }}</strong>
+  </div>
+  <div class="case-context-item">
+    <span>Justificaciones extraviadas</span>
+    <strong class="mono">{{ contexto.extraviadas }} %</strong>
+  </div>
+  <div class="case-context-note">
+    Contexto del caso v6 · {{ 'proyección 2027' if contexto.proyeccion else 'línea base ' ~ filtros.anio }}
+  </div>
+</section>
+
+<div class="chart-grid">
+  <section class="panel chart-panel" data-chart="historico"
+           data-metric="{{ metrica }}" data-chart-type="{{ tipo_grafico }}">
+    <header class="panel-head chart-head">
+      <div>
+        <h3>Tendencia histórica del KPI</h3>
+        <p>Serie 2024–2027 del caso UTSM.</p>
+      </div>
+      <div class="chart-toolbar">
+        <label class="chart-control">
+          <span>Indicador</span>
+          <select id="chart-metric" class="filter-select">
+            <option value="oportunidad" {{ 'selected' if metrica == 'oportunidad' }}>Oportunidad</option>
+            <option value="eficiencia" {{ 'selected' if metrica == 'eficiencia' }}>Eficiencia</option>
+            <option value="calidad" {{ 'selected' if metrica == 'calidad' }}>Calidad</option>
+          </select>
+        </label>
+        <label class="chart-control">
+          <span>Gráfico</span>
+          <select id="chart-type" class="filter-select">
+            <option value="line" {{ 'selected' if tipo_grafico == 'line' }}>Línea</option>
+            <option value="bar" {{ 'selected' if tipo_grafico == 'bar' }}>Barras</option>
+            <option value="area" {{ 'selected' if tipo_grafico == 'area' }}>Área</option>
+            <option value="radial" {{ 'selected' if tipo_grafico == 'radial' }}>Radial</option>
+            <option value="heatmap" {{ 'selected' if tipo_grafico == 'heatmap' }}>Heatmap</option>
+          </select>
+        </label>
+      </div>
+    </header>
+    <div class="chart-surface" id="chart-historico-wrap">
+      <canvas id="chart-historico"></canvas>
+      <div class="heatmap" id="heatmap-historico" hidden></div>
+    </div>
+    <p class="panel-note">2027 es una proyección de las metas TO-BE; no es una medición real.</p>
+  </section>
+
+  <section class="panel chart-panel" data-chart="operacion" data-chart-type="{{ tipo_ops }}">
+    <header class="panel-head chart-head">
+      <div>
+        <h3>Operación del periodo</h3>
+        <p>{{ operacion.etiqueta }} · {{ operacion.total_marcas }} marcas · {{ operacion.total_incidencias }} incidencias</p>
+      </div>
+      <div class="chart-toolbar">
+        <label class="chart-control">
+          <span>Gráfico</span>
+          <select id="ops-chart-type" class="filter-select">
+            <option value="bar" {{ 'selected' if tipo_ops == 'bar' }}>Barras</option>
+            <option value="line" {{ 'selected' if tipo_ops == 'line' }}>Línea</option>
+            <option value="area" {{ 'selected' if tipo_ops == 'area' }}>Área</option>
+            <option value="radial" {{ 'selected' if tipo_ops == 'radial' }}>Radial</option>
+            <option value="heatmap" {{ 'selected' if tipo_ops == 'heatmap' }}>Heatmap</option>
+          </select>
+        </label>
+      </div>
+    </header>
+    <div class="ops-summary">
+      {% if operacion.total_marcas %}
+        <span>Calidad operativa del periodo <strong class="mono">{{ operacion.calidad_operativa }} %</strong></span>
+        <span>Adopción NFC <strong class="mono">{{ operacion.nfc_adopcion }} %</strong></span>
+        {% if simulacion %}
+          <span class="muted">Escenario TO-BE simulado de enero 2027; no es una medición real.</span>
+        {% else %}
+          <span class="muted">Muestra operativa simulada; no sustituye el KPI del caso.</span>
+        {% endif %}
+      {% else %}
+        <span>Calidad operativa <strong class="mono">—</strong></span>
+        <span class="muted">No hay marcaciones que analizar en el periodo.</span>
+      {% endif %}
+    </div>
+    <div class="chart-surface" id="chart-operacion-wrap">
+      <canvas id="chart-operacion"></canvas>
+      <div class="heatmap" id="heatmap-operacion" hidden></div>
+    </div>
+  </section>
+</div>
+{% endblock %}
+
+{% block scripts %}
+  <script src="{{ url_for('static', filename='vendor/chart.umd.min.js') }}" defer></script>
+  <script src="{{ url_for('static', filename='js/charts.js') }}" defer></script>
+{% endblock %}

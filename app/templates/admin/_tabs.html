@@ -1,0 +1,14 @@
+{% from "_icons.html" import icon %}
+<nav class="admin-tabs" aria-label="Módulos de administración">
+  <a class="admin-tab {{ 'is-active' if request.endpoint == 'admin.index' }}" href="{{ url_for('admin.index') }}">Resumen</a>
+  {% for entidad in entidades_admin %}
+    {% if entidad.slug == 'horarios' %}
+      <a class="admin-tab {{ 'is-active' if request.endpoint in ('admin.horarios_lista', 'admin.horarios_semana') }}"
+         href="{{ url_for('admin.horarios_lista') }}">{{ entidad.nombre }}</a>
+    {% else %}
+      <a class="admin-tab {{ 'is-active' if request.view_args and request.view_args.get('slug') == entidad.slug }}"
+         href="{{ url_for('admin.lista', slug=entidad.slug) }}">{{ entidad.nombre }}</a>
+    {% endif %}
+  {% endfor %}
+  <a class="admin-tab {{ 'is-active' if request.endpoint == 'admin.reglas' }}" href="{{ url_for('admin.reglas') }}">Reglas</a>
+</nav>

@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% from "_icons.html" import icon %}
+
+{% block title %}Incidencias del proceso{% endblock %}
+{% block page_title %}Incidencias del proceso{% endblock %}
+{% block page_subtitle %}Vista global de solo lectura{% endblock %}
+{% block styles %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/incidents.css') }}">
+{% endblock %}
+
+{% block content %}
+<header class="page-head">
+  <div class="page-head-copy">
+    <h2>Incidencias del proceso</h2>
+    <p>Marcaciones observadas y justificaciones de todas las áreas. La aprobación corresponde al coordinador de cada área.</p>
+    <div class="page-tags">
+      <span class="badge badge--muted">Vista de análisis</span>
+      <span class="badge badge--muted">Datos ficticios</span>
+    </div>
+  </div>
+</header>
+
+{% include "incidents/_summary.html" %}
+
+<section class="panel" aria-labelledby="global-title">
+  <header class="panel-head">
+    <div>
+      <h3 id="global-title">Registro de incidencias</h3>
+      <p>Filtra por estado o área para revisar el flujo.</p>
+    </div>
+  </header>
+
+  <form method="get" class="filter-bar" role="search">
+    <label class="filter-field">
+      <span>Estado</span>
+      <select name="estado" class="filter-select">
+        <option value="">Todos</option>
+        {% for estado in estados %}
+          <option value="{{ estado }}" {{ 'selected' if estado_seleccionado == estado }}>
+            {{ {'pendiente': 'Pendiente', 'justificada': 'Justificada', 'rechazada': 'Rechazada', 'cerrada': 'Cerrada'}.get(estado, estado) }}
+          </option>
+        {% endfor %}
+      </select>
+    </label>
+    <label class="filter-field">
+      <span>Área</span>
+      <select name="area" class="filter-select">
+        <option value="">Todas</option>
+        {% for area in areas %}
+          <option value="{{ area.id_area }}" {{ 'selected' if area_seleccionada == area.id_area }}>{{ area.nombre }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <button type="submit" class="btn btn--primary btn--sm">Filtrar</button>
+    <a class="btn btn--ghost btn--sm" href="{{ url_for('incidents.index') }}">Limpiar</a>
+  </form>
+
+  {% if incidencias %}
+    <div class="incident-list">
+      {% for incidencia in incidencias %}
+        {% set estado = estado_incidencia(incidencia) %}
+        <article class="incident-row incident-row--global">
+          <div class="incident-main">
+            <div class="incident-line">
+              <span class="incident-kind">{{ incidencia.trabajador.nombre_corto }}</span>
+              <span class="badge badge--{{ estado.badge }}">{{ estado.label }}</span>
+            </div>
+            <span class="incident-meta">{{ incidencia.trabajador.area.nombre }} · {{ tipo_incidencia_label(incidencia.tipo) }}</span>
+            <span class="incident-sub mono">{{ incidencia.marca.fecha_hora.strftime('%d/%m/%Y · %H:%M') }}</span>
+          </div>
+          <div class="incident-actions">
+            <a class="btn btn--ghost btn--sm"
+               href="{{ url_for('incidents.detalle', incidencia_id=incidencia.id_incidencia) }}">Ver detalle</a>
+          </div>
+        </article>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <p>No hay incidencias con los filtros seleccionados.</p>
+      <p class="muted">El kiosco puede generar marcaciones de prueba.</p>
+      <a class="btn btn--ghost btn--sm" href="{{ url_for('kiosk.index') }}">
+        {{ icon('scan', 15) }} Abrir kiosco
+      </a>
+    </div>
+  {% endif %}
+</section>
+{% endblock %}

@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+{% from "_icons.html" import icon %}
+
+{% block title %}Corregir marcación{% endblock %}
+{% block page_title %}Corregir marcación{% endblock %}
+{% block page_subtitle %}Cambio manual con motivo y auditoría{% endblock %}
+{% block styles %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/incidents.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/reports.css') }}">
+{% endblock %}
+
+{% block content %}
+<header class="detail-head">
+  <div>
+    <a class="back-link"
+       href="{{ url_for('attendance.marcas', trabajador_id=datos.trabajador.id_trabajador, anio=datos.anio, mes=datos.mes) }}">
+      ← Volver a las marcaciones
+    </a>
+    <h2>{{ datos.trabajador.nombres }}</h2>
+    <p class="mono">{{ marca.fecha_hora.strftime('%d/%m/%Y · %H:%M') }} · {{ marca.sede.nombre }}</p>
+  </div>
+</header>
+
+<div class="justify-grid">
+  <section class="panel incident-context-panel" aria-labelledby="contexto-title">
+    <header class="panel-head">
+      <div>
+        <h3 id="contexto-title">Marcación actual</h3>
+        <p>{{ datos.mes_label }}</p>
+      </div>
+      <span class="badge badge--{{ 'brass' if marca.estado == 'observada' else 'muted' }}">
+        {{ 'Observada' if marca.estado == 'observada' else 'Válida' }}
+      </span>
+    </header>
+
+    <dl class="detail-list">
+      <div class="detail-row"><dt>Trabajador</dt><dd>{{ datos.trabajador.nombre_corto }}</dd></div>
+      <div class="detail-row"><dt>Área</dt><dd>{{ datos.trabajador.area.nombre }}</dd></div>
+      <div class="detail-row"><dt>Fecha y hora</dt><dd>{{ marca.fecha_hora.strftime('%d/%m/%Y · %H:%M') }}</dd></div>
+      <div class="detail-row"><dt>Tipo</dt><dd>{{ tipo_marca_label(marca.tipo) }}</dd></div>
+      <div class="detail-row"><dt>Medio</dt><dd>{{ {'nfc': 'NFC', 'huella': 'Huella', 'contingencia': 'Contingencia'}.get(marca.medio, marca.medio) }}</dd></div>
+      <div class="detail-row"><dt>Sede</dt><dd>{{ marca.sede.nombre }}</dd></div>
+      <div class="detail-row"><dt>Lector</dt><dd>{{ marca.lector.nombre }}</dd></div>
+      {% if marca.incidencia %}
+        <div class="detail-row">
+          <dt>Incidencia</dt>
+          <dd>{{ tipo_incidencia_label(marca.incidencia.tipo) }} · {{ marca.incidencia.estado }}</dd>
+        </div>
+      {% endif %}
+    </dl>
+
+    {% if marca.incidencia and marca.incidencia.estado in ('pendiente', 'rechazada') %}
+      <p class="panel-note">
+        {{ icon('info', 14) }}
+        Al guardar, la incidencia asociada pasará a cerrada y quedará registrada en la auditoría.
+      </p>
+    {% endif %}
+  </section>
+
+  <section class="panel" aria-labelledby="form-title">
+    <header class="panel-head">
+      <div>
+        <h3 id="form-title">Nuevos datos</h3>
+        <p>La corrección se aplica solo a esta marcación.</p>
+      </div>
+    </header>
+
+    <form method="post" class="justify-form" novalidate>
+      {{ form.hidden_tag() }}
+
+      <div class="field">
+        <label class="label" for="{{ form.fecha.id }}">Fecha</label>
+        {{ form.fecha(class_="input" + (" is-invalid" if form.fecha.errors else ""), placeholder="dd/mm/aaaa", inputmode="numeric", autocomplete="off") }}
+        {% for error in form.fecha.errors %}
+          <p class="field-error">{{ icon('alert', 14) }} {{ error }}</p>
+        {% endfor %}
+      </div>
+
+      <div class="field">
+        <label class="label" for="{{ form.hora.id }}">Hora</label>
+        {{ form.hora(class_="input" + (" is-invalid" if form.hora.errors else ""), placeholder="HH:MM", inputmode="numeric", autocomplete="off") }}
+        {% for error in form.hora.errors %}
+          <p class="field-error">{{ icon('alert', 14) }} {{ error }}</p>
+        {% endfor %}
+      </div>
+
+      <div class="field">
+        <label class="label" for="{{ form.tipo.id }}">Tipo de marcación</label>
+        {{ form.tipo(class_="input") }}
+        {% for error in form.tipo.errors %}
+          <p class="field-error">{{ icon('alert', 14) }} {{ error }}</p>
+        {% endfor %}
+      </div>
+
+      <div class="field">
+        <label class="label" for="{{ form.motivo.id }}">Motivo de la corrección</label>
+        {{ form.motivo(class_="input textarea", rows="4", placeholder="Explica qué ocurrió y por qué se corrige la marcación.") }}
+        <p class="panel-note">Mínimo 8 caracteres. El motivo queda en la auditoría.</p>
+        {% for error in form.motivo.errors %}
+          <p class="field-error">{{ icon('alert', 14) }} {{ error }}</p>
+        {% endfor %}
+      </div>
+
+      <div class="form-actions">
+        {{ form.submit(class_="btn btn--primary") }}
+        <a class="btn btn--ghost"
+           href="{{ url_for('attendance.marcas', trabajador_id=datos.trabajador.id_trabajador, anio=datos.anio, mes=datos.mes) }}">
+          Cancelar
+        </a>
+      </div>
+    </form>
+  </section>
+</div>
+{% endblock %}

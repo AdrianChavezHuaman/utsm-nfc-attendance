@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+{% from "_icons.html" import icon %}
+
+{% block title %}Marcaciones de {{ datos.trabajador.nombre_corto }}{% endblock %}
+{% block page_title %}Marcaciones del mes{% endblock %}
+{% block page_subtitle %}Corrección manual con auditoría{% endblock %}
+{% block styles %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/incidents.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/reports.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/attendance.css') }}">
+{% endblock %}
+
+{% block content %}
+<header class="page-head">
+  <div class="page-head-copy">
+    <a class="back-link"
+       href="{{ url_for('attendance.personal_detalle', trabajador_id=datos.trabajador.id_trabajador, anio=datos.anio, mes=datos.mes) }}">
+      ← Volver a la ficha
+    </a>
+    <h2>{{ datos.trabajador.nombres }}</h2>
+    <p>{{ datos.trabajador.cargo }} · {{ datos.trabajador.area.nombre }}</p>
+    <div class="page-tags">
+      <span class="badge badge--muted">{{ datos.mes_label }}</span>
+      <span class="badge badge--muted">{{ datos.total }} marcaciones</span>
+      <span class="badge badge--{{ 'clay' if datos.periodo.bloqueado else 'jade' }}">
+        Periodo {{ datos.periodo.estado }}
+      </span>
+    </div>
+  </div>
+  <div class="report-actions">
+    <a class="btn btn--ghost btn--sm"
+       href="{{ url_for('attendance.marcas', trabajador_id=datos.trabajador.id_trabajador, anio=datos.anterior[0], mes=datos.anterior[1]) }}">
+      ← Mes anterior
+    </a>
+    <a class="btn btn--ghost btn--sm"
+       href="{{ url_for('attendance.marcas', trabajador_id=datos.trabajador.id_trabajador, anio=datos.siguiente[0], mes=datos.siguiente[1]) }}">
+      Mes siguiente →
+    </a>
+  </div>
+</header>
+
+{% if datos.periodo.bloqueado %}
+  <div class="period-banner">
+    {{ icon('lock', 16) }}
+    <span>
+      El periodo está {{ datos.periodo.estado }}. Las marcaciones se pueden revisar,
+      pero no corregir.
+    </span>
+  </div>
+{% endif %}
+
+<section class="panel" aria-labelledby="marcas-title">
+  <header class="panel-head">
+    <div>
+      <h3 id="marcas-title">Marcaciones registradas</h3>
+      <p>Cada corrección exige un motivo y queda en la auditoría.</p>
+    </div>
+    <span class="badge badge--muted">{{ datos.mes_label }}</span>
+  </header>
+
+  {% if datos.marcas %}
+    <div class="table-wrap">
+      <table class="report-table">
+        <thead>
+          <tr>
+            <th>Fecha</th>
+            <th class="is-number">Hora</th>
+            <th>Tipo</th>
+            <th class="col-optional">Medio</th>
+            <th>Estado</th>
+            <th class="col-optional">Sede</th>
+            <th class="col-optional">Lector</th>
+            <th class="col-optional">Incidencia</th>
+            <th class="col-action">Acción</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for marca in datos.marcas %}
+            <tr>
+              <td class="mono">{{ marca.fecha.strftime('%d/%m/%Y') }}</td>
+              <td class="is-number mono">{{ marca.hora }}</td>
+              <td>{{ marca.tipo_label }}</td>
+              <td class="col-optional">{{ marca.medio_label }}</td>
+              <td>
+                <span class="badge badge--{{ 'brass' if marca.estado == 'observada' else 'muted' }}">
+                  {{ marca.estado_label }}
+                </span>
+              </td>
+              <td class="col-optional">{{ marca.sede }}</td>
+              <td class="col-optional">{{ marca.lector }}</td>
+              <td class="col-optional">
+                {% if marca.incidencia %}
+                  <span class="report-worker">{{ marca.incidencia.tipo_label }}</span>
+                  <span class="badge badge--muted">{{ marca.incidencia.estado }}</span>
+                {% else %}
+                  —
+                {% endif %}
+              </td>
+              <td class="col-action">
+                {% if datos.periodo.bloqueado %}
+                  —
+                {% else %}
+                  <a class="btn btn--ghost btn--sm"
+                     href="{{ url_for('attendance.corregir_marca', trabajador_id=datos.trabajador.id_trabajador, marca_id=marca.id) }}">
+                    Corregir
+                  </a>
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p class="panel-note">No hay marcaciones registradas en {{ datos.mes_label }}.</p>
+  {% endif %}
+</section>
+{% endblock %}

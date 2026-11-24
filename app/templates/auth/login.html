@@ -1,0 +1,181 @@
+{% extends "base_public.html" %}
+{% from "_icons.html" import icon %}
+
+{% block title %}Iniciar sesión · Control de Asistencia UTSM{% endblock %}
+{% block body_class %}auth-body{% endblock %}
+{% block styles %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/login.css') }}">
+{% endblock %}
+
+{% block body %}
+<main class="auth-layout" id="contenido">
+  <section class="auth-intro" aria-labelledby="auth-title">
+    <header class="auth-intro-head">
+      <a class="brand" href="{{ url_for('auth.login') }}">
+        <span class="logo-mark">{{ icon('logo', 23) }}</span>
+        <span class="brand-text">
+          <span class="brand-name">UTSM</span>
+          <span class="brand-sub">Gestión del talento humano</span>
+        </span>
+      </a>
+    </header>
+
+    <div class="auth-intro-body">
+      <h1 id="auth-title">Control de Asistencia UTSM</h1>
+      <p class="auth-lead">
+        Registro NFC, incidencias y consolidado del personal docente y administrativo
+        en un solo proceso trazable.
+      </p>
+
+      <p class="auth-dataset mono">280 trabajadores <span>·</span> 2 sedes <span>·</span> 5 roles</p>
+
+      <ol class="process-list" aria-label="Etapas del proceso AP-GTH-01">
+        <li>
+          <span class="process-num mono">01</span>
+          <span class="process-body">
+            <span class="process-name">Registro</span>
+            <span class="process-desc">Tarjeta NFC y contingencia con huella</span>
+          </span>
+        </li>
+        <li>
+          <span class="process-num mono">02</span>
+          <span class="process-body">
+            <span class="process-name">Validación</span>
+            <span class="process-desc">Reglas de horario, duplicados y sedes</span>
+          </span>
+        </li>
+        <li>
+          <span class="process-num mono">03</span>
+          <span class="process-body">
+            <span class="process-name">Justificación</span>
+            <span class="process-desc">Sustento digital y aprobación del coordinador</span>
+          </span>
+        </li>
+        <li>
+          <span class="process-num mono">04</span>
+          <span class="process-body">
+            <span class="process-name">Consolidación</span>
+            <span class="process-desc">Cierre mensual, reportes y auditoría</span>
+          </span>
+        </li>
+      </ol>
+    </div>
+
+    <footer class="auth-intro-foot">
+      <span>Proceso AP-GTH-01</span>
+      <span>Datos ficticios</span>
+    </footer>
+  </section>
+
+  <section class="auth-access" aria-labelledby="access-title">
+    <div class="auth-panel glass">
+      <header class="auth-panel-head">
+        <span class="logo-mark logo-mark--sm">{{ icon('logo', 20) }}</span>
+        <div>
+          <h2 id="access-title">Acceso al sistema</h2>
+          <p>Usa tu cuenta institucional. Cada acceso queda auditado.</p>
+        </div>
+      </header>
+
+      {% include "_flash.html" %}
+
+      {% if form.errors %}
+        <div class="flash flash--error" role="alert">
+          {{ icon('alert', 18) }}
+          <span class="flash-text">Revisa los campos marcados para continuar.</span>
+        </div>
+      {% endif %}
+
+      <form method="post" action="{{ url_for('auth.login', next=request.args.get('next')) }}"
+            class="auth-form" data-loading novalidate>
+        {{ form.hidden_tag() }}
+
+        <div class="field">
+          <label class="label" for="{{ form.correo.id }}">Correo institucional</label>
+          <div class="input-wrap">
+            <span class="input-icon">{{ icon('mail', 18) }}</span>
+            {{ form.correo(
+                class_="input input--icon" + (" is-invalid" if form.correo.errors else ""),
+                placeholder="nombre@utsm.edu.pe",
+                autocomplete="username",
+                autocapitalize="none",
+                spellcheck="false",
+                inputmode="email",
+                aria_invalid="true" if form.correo.errors else "false"
+            ) }}
+          </div>
+          {% for error in form.correo.errors %}
+            <p class="field-error">{{ icon('alert', 14) }} {{ error }}</p>
+          {% endfor %}
+        </div>
+
+        <div class="field">
+          <label class="label" for="{{ form.password.id }}">Contraseña</label>
+          <div class="input-wrap">
+            <span class="input-icon">{{ icon('lock', 18) }}</span>
+            {{ form.password(
+                class_="input input--icon input--action" + (" is-invalid" if form.password.errors else ""),
+                placeholder="Ingresa tu contraseña",
+                autocomplete="current-password",
+                aria_invalid="true" if form.password.errors else "false"
+            ) }}
+            <button type="button" class="input-action" data-toggle-password="{{ form.password.id }}"
+                    aria-label="Mostrar contraseña" aria-pressed="false">
+              <span class="eye-on">{{ icon('eye', 18) }}</span>
+              <span class="eye-off">{{ icon('eye-off', 18) }}</span>
+            </button>
+          </div>
+          {% for error in form.password.errors %}
+            <p class="field-error">{{ icon('alert', 14) }} {{ error }}</p>
+          {% endfor %}
+        </div>
+
+        <div class="auth-options">
+          <label class="checkbox">
+            {{ form.recordarme() }}
+            <span>Mantener la sesión iniciada</span>
+          </label>
+        </div>
+        <p class="auth-option-hint">
+          Solo en equipos de confianza. No guarda tu contraseña.
+        </p>
+
+        <button type="submit" class="btn btn--primary btn--block auth-submit" data-submit>
+          <span class="btn-label">Ingresar al sistema</span>
+          {{ icon('arrow-right', 18, 'btn-arrow') }}
+        </button>
+      </form>
+
+      <details class="demo-box">
+        <summary>
+          {{ icon('info', 16) }}
+          <span>Credenciales de demostración</span>
+        </summary>
+        <table class="demo-table">
+          <thead>
+            <tr><th>Rol</th><th>Correo</th><th>Clave</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Trabajador</td><td><code>trabajador@utsm.edu.pe</code></td><td><code>trabajador123</code></td></tr>
+            <tr><td>Coordinador</td><td><code>coordinador@utsm.edu.pe</code></td><td><code>coordinador123</code></td></tr>
+            <tr><td>Analista</td><td><code>analista@utsm.edu.pe</code></td><td><code>analista123</code></td></tr>
+            <tr><td>Jefe RR. HH.</td><td><code>jefe@utsm.edu.pe</code></td><td><code>jefe123</code></td></tr>
+            <tr><td>Administrador</td><td><code>admin@utsm.edu.pe</code></td><td><code>admin123</code></td></tr>
+          </tbody>
+        </table>
+        <p class="demo-note">Solo para la demostración local. No usar datos reales.</p>
+      </details>
+
+      <p class="auth-legal">
+        {{ icon('shield', 15) }}
+        <span>Acceso auditado. Uso exclusivo del personal autorizado.</span>
+      </p>
+    </div>
+
+    <footer class="auth-access-foot">
+      <span>UTSM · Control de Asistencia</span>
+      <span class="mono">{{ config.APP_VERSION }}</span>
+    </footer>
+  </section>
+</main>
+{% endblock %}

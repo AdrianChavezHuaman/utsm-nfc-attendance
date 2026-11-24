@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% from "_icons.html" import icon %}
+
+{% block title %}Reglas del proceso{% endblock %}
+{% block page_title %}Reglas del proceso{% endblock %}
+{% block page_subtitle %}Configuración visible{% endblock %}
+{% block styles %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/incidents.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/reports.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+{% endblock %}
+
+{% block content %}
+<header class="page-head">
+  <div class="page-head-copy">
+    <h2>Reglas del proceso</h2>
+    <p>Reglas R-01 a R-10 y parámetros activos del prototipo. Los cambios de parámetros se auditan en la versión institucional.</p>
+    <div class="page-tags">
+      <span class="badge badge--muted">Consulta</span>
+      <span class="badge badge--muted">R-01 a R-10</span>
+    </div>
+  </div>
+</header>
+
+{% include "admin/_tabs.html" %}
+
+<section class="panel" aria-labelledby="reglas-title">
+  <header class="panel-head">
+    <div>
+      <h3 id="reglas-title">Reglas de validación y control</h3>
+      <p>La aplicación las usa en el kiosco, las justificaciones y el cierre.</p>
+    </div>
+  </header>
+
+  <div class="table-wrap">
+    <table class="report-table rule-table">
+      <thead>
+        <tr><th>Regla</th><th>Descripción</th><th>Valor / control actual</th></tr>
+      </thead>
+      <tbody>
+        {% for codigo, descripcion, valor in reglas %}
+          <tr>
+            <td><span class="rule-code mono">{{ codigo }}</span></td>
+            <td>{{ descripcion }}</td>
+            <td><span class="rule-value">{{ valor }}</span></td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <p class="panel-note">
+    Los plazos y tolerancias se definen en el proceso AP-GTH-01. En esta versión se muestran
+    como configuración visible; la edición de parámetros se incorporará en la implantación.
+  </p>
+</section>
+{% endblock %}

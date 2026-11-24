@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% from "_icons.html" import icon %}
+
+{% block title %}Administración{% endblock %}
+{% block page_title %}Administración{% endblock %}
+{% block page_subtitle %}Catálogos, tarjetas y usuarios{% endblock %}
+{% block styles %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/incidents.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/reports.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+{% endblock %}
+
+{% block content %}
+<header class="page-head">
+  <div class="page-head-copy">
+    <h2>Administración del sistema</h2>
+    <p>Gestiona los catálogos que alimentan el kiosco, las justificaciones y el consolidado. Cada cambio queda auditado.</p>
+    <div class="page-tags">
+      <span class="badge badge--jade">{{ icon('shield', 13) }} Solo administrador</span>
+      <span class="badge badge--muted">Datos ficticios</span>
+    </div>
+  </div>
+</header>
+
+{% include "admin/_tabs.html" %}
+
+<section class="panel" aria-labelledby="modulos-title">
+  <header class="panel-head">
+    <div>
+      <h3 id="modulos-title">Módulos de datos</h3>
+      <p>Estado actual de los registros maestros.</p>
+    </div>
+    <span class="badge badge--muted">Catálogos</span>
+  </header>
+
+  <div class="table-wrap">
+    <table class="report-table admin-overview">
+      <thead>
+        <tr>
+          <th>Módulo</th>
+          <th>Descripción</th>
+          <th class="is-number">Registros</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for entidad in entidades %}
+          <tr>
+            <td><span class="report-worker">{{ entidad.nombre }}</span></td>
+            <td>{{ entidad.descripcion }}</td>
+            <td class="is-number mono">{{ conteos[entidad.slug] }}</td>
+            <td>
+              <a class="btn btn--ghost btn--sm"
+                 href="{{ url_for('admin.horarios_lista') if entidad.slug == 'horarios' else url_for('admin.lista', slug=entidad.slug) }}">Abrir</a>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="panel rules-summary" aria-labelledby="reglas-resumen">
+  <header class="panel-head">
+    <div>
+      <h3 id="reglas-resumen">Reglas del proceso</h3>
+      <p>Parámetros activos del prototipo.</p>
+    </div>
+    <a class="btn btn--ghost btn--sm" href="{{ url_for('admin.reglas') }}">Ver detalle</a>
+  </header>
+  <div class="rule-chips">
+    {% for codigo, descripcion, valor in reglas[:4] %}
+      <span class="rule-chip"><strong>{{ codigo }}</strong><span>{{ valor }}</span></span>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}

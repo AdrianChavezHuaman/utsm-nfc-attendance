@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% from "_icons.html" import icon %}
+
+{% block title %}{{ 'Editar' if es_edicion else 'Nuevo' }} {{ entidad.singular }}{% endblock %}
+{% block page_title %}{{ 'Editar' if es_edicion else 'Nuevo' }} {{ entidad.singular }}{% endblock %}
+{% block page_subtitle %}Administración{% endblock %}
+{% block styles %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/incidents.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/reports.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+{% endblock %}
+
+{% block content %}
+<header class="page-head">
+  <div class="page-head-copy">
+    <h2>{{ 'Editar' if es_edicion else 'Nuevo' }} {{ entidad.singular|lower }}</h2>
+    <p>{{ entidad.descripcion }}</p>
+  </div>
+  <div class="report-actions">
+    <a class="btn btn--ghost btn--sm" href="{{ url_for('admin.lista', slug=entidad.slug) }}">Volver al listado</a>
+  </div>
+</header>
+
+{% include "admin/_tabs.html" %}
+
+<section class="panel admin-form-panel">
+  <form method="post" class="admin-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+    {% if errores.get('__general__') %}
+      <div class="flash flash--error" role="alert">
+        {{ icon('alert', 18) }}
+        <span class="flash-text">{{ errores['__general__'] }}</span>
+      </div>
+    {% endif %}
+
+    <div class="admin-form-grid">
+      {% for item in campos %}
+        {% set campo = item.campo %}
+        {% set valor = item.valor %}
+        <div class="field admin-field {{ 'admin-field--full' if campo.ancho == 'full' or campo.tipo == 'textarea' }}">
+          {% if campo.tipo == 'checkbox' %}
+            <label class="checkbox">
+              <input type="checkbox" name="{{ campo.nombre }}" value="1" {{ 'checked' if valor }}>
+              <span>{{ campo.etiqueta }}</span>
+            </label>
+          {% else %}
+            <label class="label" for="campo-{{ campo.nombre }}">{{ campo.etiqueta }}{% if campo.requerido %} <span class="required">*</span>{% endif %}</label>
+            {% if campo.tipo in ('select', 'select_int') %}
+              <select id="campo-{{ campo.nombre }}" name="{{ campo.nombre }}" class="input">
+                {% if not campo.requerido %}<option value="">— Sin vínculo —</option>{% endif %}
+                {% for clave, etiqueta in item.opciones %}
+                  <option value="{{ clave }}" {{ 'selected' if valor|string == clave|string }}>{{ etiqueta }}</option>
+                {% endfor %}
+              </select>
+            {% elif campo.tipo == 'password' %}
+              <input id="campo-{{ campo.nombre }}" class="input" type="password" name="{{ campo.nombre }}"
+                     autocomplete="new-password" placeholder="Mínimo 8 caracteres">
+            {% elif campo.tipo == 'date' %}
+              <input id="campo-{{ campo.nombre }}" class="input" type="date" name="{{ campo.nombre }}" value="{{ valor }}">
+            {% elif campo.tipo == 'time' %}
+              <input id="campo-{{ campo.nombre }}" class="input" type="time" name="{{ campo.nombre }}" value="{{ valor }}">
+            {% elif campo.tipo == 'textarea' %}
+              <textarea id="campo-{{ campo.nombre }}" class="input textarea" name="{{ campo.nombre }}" rows="4">{{ valor }}</textarea>
+            {% else %}
+              <input id="campo-{{ campo.nombre }}" class="input" type="text" name="{{ campo.nombre }}" value="{{ valor }}">
+            {% endif %}
+            {% if campo.ayuda %}<p class="panel-note">{{ campo.ayuda }}</p>{% endif %}
+          {% endif %}
+          {% if item.error %}<p class="field-error">{{ icon('alert', 14) }} {{ item.error }}</p>{% endif %}
+        </div>
+      {% endfor %}
+    </div>
+
+    <div class="admin-form-actions">
+      <button type="submit" class="btn btn--primary">Guardar cambios</button>
+      <a class="btn btn--ghost" href="{{ url_for('admin.lista', slug=entidad.slug) }}">Cancelar</a>
+    </div>
+  </form>
+</section>
+{% endblock %}

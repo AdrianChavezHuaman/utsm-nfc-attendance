@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% from "_icons.html" import icon %}
+
+{% block title %}Horario de {{ trabajador.nombre_corto }}{% endblock %}
+{% block page_title %}Horario semanal{% endblock %}
+{% block page_subtitle %}Horarios semanales{% endblock %}
+{% block styles %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/incidents.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/reports.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/attendance.css') }}">
+{% endblock %}
+
+{% block content %}
+<header class="page-head">
+  <div class="page-head-copy">
+    <h2>{{ trabajador.nombres }}</h2>
+    <p>{{ trabajador.cargo }} · {{ trabajador.area.nombre }} · {{ trabajador.dni }}</p>
+    <div class="page-tags">
+      <span class="badge badge--muted">{{ trabajador.tarjeta.uid if trabajador.tarjeta else 'Sin tarjeta' }}</span>
+      <span class="badge badge--muted">{{ 'Activo' if trabajador.activo else 'Inactivo' }}</span>
+    </div>
+  </div>
+  <div class="report-actions">
+    <a class="btn btn--ghost btn--sm" href="{{ url_for('admin.horarios_lista') }}">Volver a horarios</a>
+  </div>
+</header>
+
+{% include "admin/_tabs.html" %}
+
+<section class="panel admin-form-panel">
+  <form method="post" class="schedule-form" data-schedule-form>
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+    {% if errores.get('__general__') %}
+      <div class="flash flash--error" role="alert">
+        {{ icon('alert', 18) }}
+        <span class="flash-text">{{ errores['__general__'] }}</span>
+      </div>
+    {% endif %}
+
+    <header class="panel-head schedule-form-head">
+      <div>
+        <h3>Semana laboral</h3>
+        <p>Marca los días que trabaja y define el turno. Los días sin marcar quedan como descanso.</p>
+      </div>
+      <button type="button" class="btn btn--ghost btn--sm" data-copy-monday>Copiar lunes al resto</button>
+    </header>
+
+    <div class="schedule-week">
+      {% for dia in semana %}
+        <div class="schedule-day {{ 'is-active' if dia.activo }}" data-day="{{ dia.dia }}">
+          <div class="schedule-day-head">
+            <label class="checkbox schedule-toggle">
+              <input type="checkbox" name="dia_{{ dia.dia }}_activo" value="1" {{ 'checked' if dia.activo }}>
+              <span>{{ dia.nombre }}</span>
+            </label>
+          </div>
+          <div class="schedule-times">
+            <label class="field">
+              <span class="label">Entrada</span>
+              <input class="input" type="time" name="dia_{{ dia.dia }}_entrada" value="{{ dia.entrada }}">
+            </label>
+            <label class="field">
+              <span class="label">Salida</span>
+              <input class="input" type="time" name="dia_{{ dia.dia }}_salida" value="{{ dia.salida }}">
+            </label>
+            <label class="field schedule-turn">
+              <span class="label">Turno</span>
+              <select class="input" name="dia_{{ dia.dia }}_turno">
+                <option value="completo" {{ 'selected' if dia.turno == 'completo' }}>Completo</option>
+                <option value="parcial" {{ 'selected' if dia.turno == 'parcial' }}>Parcial</option>
+                <option value="nocturno" {{ 'selected' if dia.turno == 'nocturno' }}>Nocturno</option>
+              </select>
+            </label>
+          </div>
+          {% if errores.get(dia.nombre) %}
+            <p class="field-error">{{ icon('alert', 14) }} {{ errores[dia.nombre] }}</p>
+          {% endif %}
+        </div>
+      {% endfor %}
+    </div>
+
+    <div class="admin-form-actions">
+      <button type="submit" class="btn btn--primary">Guardar semana</button>
+      <a class="btn btn--ghost" href="{{ url_for('admin.horarios_lista') }}">Cancelar</a>
+    </div>
+  </form>
+</section>
+{% endblock %}
+
+{% block scripts %}
+  <script src="{{ url_for('static', filename='js/schedule.js') }}" defer></script>
+{% endblock %}

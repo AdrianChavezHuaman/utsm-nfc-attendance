@@ -1,0 +1,5 @@
+# Herramientas de desarrollo y QA (no necesarias para ejecutar el prototipo)
+-r requirements.txt
+
+ruff>=0.9
+selenium>=4.30

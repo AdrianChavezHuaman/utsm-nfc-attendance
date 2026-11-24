@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% from "_icons.html" import icon %}
+
+{% block title %}Justificar incidencia{% endblock %}
+{% block page_title %}Justificar incidencia{% endblock %}
+{% block page_subtitle %}Sustento digital{% endblock %}
+{% block styles %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/incidents.css') }}">
+{% endblock %}
+
+{% block content %}
+<header class="detail-head">
+  <div>
+    <a class="back-link" href="{{ url_for('incidents.detalle', incidencia_id=incidencia.id_incidencia) }}">← Volver al detalle</a>
+    <h2>{{ 'Reenviar justificación' if es_reenvio else 'Presentar justificación' }}</h2>
+    <p class="mono">{{ incidencia.marca.fecha_hora.strftime('%d/%m/%Y · %H:%M') }} · {{ incidencia.marca.sede.nombre }}</p>
+  </div>
+</header>
+
+<div class="justify-grid">
+  <section class="panel incident-context-panel" aria-labelledby="contexto-title">
+    <header class="panel-head">
+      <div>
+        <h3 id="contexto-title">Incidencia a justificar</h3>
+        <p>{{ tipo_incidencia_label(incidencia.tipo) }}</p>
+      </div>
+      <span class="badge badge--brass">5 días hábiles</span>
+    </header>
+
+    <dl class="detail-list">
+      <div class="detail-row"><dt>Trabajador</dt><dd>{{ incidencia.trabajador.nombre_corto }}</dd></div>
+      <div class="detail-row"><dt>Área</dt><dd>{{ incidencia.trabajador.area.nombre }}</dd></div>
+      <div class="detail-row"><dt>Sede</dt><dd>{{ incidencia.marca.sede.nombre }}</dd></div>
+      <div class="detail-row"><dt>Lector</dt><dd>{{ incidencia.marca.lector.nombre }}</dd></div>
+      <div class="detail-row"><dt>Marca</dt><dd>{{ tipo_marca_label(incidencia.marca.tipo) }} · {{ incidencia.marca.fecha_hora.strftime('%H:%M') }}</dd></div>
+    </dl>
+
+    <p class="panel-note">
+      El plazo se cuenta desde la marcación observada. La justificación pasa a revisión del
+      coordinador de tu área.
+    </p>
+  </section>
+
+  <section class="panel" aria-labelledby="form-title">
+    <header class="panel-head">
+      <div>
+        <h3 id="form-title">Sustento digital</h3>
+        <p>Adjunta un PDF o una imagen legible.</p>
+      </div>
+    </header>
+
+    <form method="post" enctype="multipart/form-data" class="justify-form" novalidate>
+      {{ form.hidden_tag() }}
+
+      <div class="field">
+        <label class="label" for="{{ form.motivo.id }}">Motivo</label>
+        {{ form.motivo(class_="input textarea", rows="5", placeholder="Explica qué ocurrió y por qué la marcación debe considerarse.") }}
+        {% for error in form.motivo.errors %}
+          <p class="field-error">{{ icon('alert', 14) }} {{ error }}</p>
+        {% endfor %}
+      </div>
+
+      <div class="field">
+        <label class="label" for="{{ form.archivo.id }}">Archivo de sustento</label>
+        {{ form.archivo(class_="input file-input", accept=".pdf,.png,.jpg,.jpeg") }}
+        <p class="panel-note">PDF, PNG, JPG o JPEG · máximo 5 MB.</p>
+        {% for error in form.archivo.errors %}
+          <p class="field-error">{{ icon('alert', 14) }} {{ error }}</p>
+        {% endfor %}
+      </div>
+
+      {% if justificacion and justificacion.archivo %}
+        <div class="current-file">
+          <span>Archivo actual:</span>
+          <a class="file-chip" href="{{ url_for('incidents.sustento', incidencia_id=incidencia.id_incidencia) }}"
+             target="_blank" rel="noopener">
+            {{ icon('file', 15) }} {{ justificacion.nombre_archivo or justificacion.archivo }}
+          </a>
+        </div>
+        <p class="panel-note">Si adjuntas un archivo nuevo, reemplazará al anterior.</p>
+      {% endif %}
+
+      <div class="form-actions">
+        {{ form.submit(class_="btn btn--primary") }}
+        <a class="btn btn--ghost" href="{{ url_for('incidents.detalle', incidencia_id=incidencia.id_incidencia) }}">Cancelar</a>
+      </div>
+    </form>
+  </section>
+</div>
+{% endblock %}
